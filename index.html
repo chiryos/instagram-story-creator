@@ -1,0 +1,796 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Instagram Story Creator</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: #080c14;
+    color: #fff;
+    display: flex;
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  /* ── LEFT PANEL ── */
+  .panel {
+    width: 320px;
+    min-width: 320px;
+    background: #0f1520;
+    padding: 20px 18px;
+    overflow-y: auto;
+    border-right: 1px solid #1c2535;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+  }
+  .panel::-webkit-scrollbar { width: 4px; }
+  .panel::-webkit-scrollbar-thumb { background: #1c2535; border-radius: 4px; }
+
+  h1 {
+    font-size: 17px;
+    font-weight: 800;
+    background: linear-gradient(90deg, #00d4ff, #0055ff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    letter-spacing: -0.3px;
+  }
+  .subtitle { font-size: 11px; color: #3d4f6a; margin-top: 2px; }
+
+  .section { display: flex; flex-direction: column; gap: 8px; }
+  .section-title {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    color: #3d4f6a;
+    padding-bottom: 4px;
+    border-bottom: 1px solid #1c2535;
+  }
+
+  .field { display: flex; flex-direction: column; gap: 4px; }
+  .field label { font-size: 12px; color: #6b7f9e; }
+
+  input[type="text"] {
+    background: #080c14;
+    border: 1px solid #1c2535;
+    border-radius: 7px;
+    padding: 8px 11px;
+    color: #fff;
+    font-size: 13px;
+    outline: none;
+    transition: border-color 0.15s;
+    width: 100%;
+  }
+  input[type="text"]:focus { border-color: #0055ff; }
+
+  .slider-row { display: flex; align-items: center; gap: 10px; }
+  input[type="range"] {
+    flex: 1;
+    accent-color: #0055ff;
+    height: 4px;
+    cursor: pointer;
+  }
+  .slider-val { font-size: 11px; color: #4a6080; min-width: 32px; text-align: right; }
+
+  .upload-area {
+    background: #080c14;
+    border: 1.5px dashed #1c2535;
+    border-radius: 10px;
+    padding: 14px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 12px;
+    color: #3d4f6a;
+    position: relative;
+  }
+  .upload-area:hover { border-color: #0055ff; color: #4488ff; }
+  .upload-area.loaded {
+    border-style: solid;
+    border-color: #00d4ff33;
+    background: #00d4ff08;
+    color: #00aacc;
+  }
+  .upload-area .icon { font-size: 20px; margin-bottom: 4px; }
+  .upload-area input { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; }
+  .thumb-preview {
+    width: 100%;
+    height: 52px;
+    object-fit: cover;
+    border-radius: 6px;
+    margin-top: 6px;
+    display: none;
+    border: 1px solid #1c2535;
+  }
+
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+
+  .color-row { display: flex; align-items: center; gap: 8px; }
+  input[type="color"] {
+    width: 32px; height: 32px;
+    border: none; border-radius: 6px;
+    cursor: pointer; padding: 2px;
+    background: #080c14;
+  }
+  .color-label { font-size: 12px; color: #6b7f9e; flex: 1; }
+
+  .download-btn {
+    width: 100%;
+    padding: 13px;
+    background: linear-gradient(135deg, #0055ff, #00c8ff);
+    border: none;
+    border-radius: 10px;
+    color: #fff;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    letter-spacing: 0.3px;
+    transition: opacity 0.2s, transform 0.1s;
+    margin-top: auto;
+  }
+  .download-btn:hover { opacity: 0.92; }
+  .download-btn:active { transform: scale(0.98); }
+
+  /* ── PREVIEW ── */
+  .preview-area {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 24px 20px 14px;
+    background: #050810;
+    overflow: hidden;
+    gap: 10px;
+  }
+  canvas {
+    display: block;
+    border-radius: 14px;
+    box-shadow: 0 24px 80px rgba(0,0,0,0.7), 0 0 0 1px #1c2535;
+    max-height: calc(100vh - 80px);
+    max-width: 100%;
+    width: auto;
+    height: auto;
+    touch-action: none;
+  }
+  .hint {
+    font-size: 11px;
+    color: #2a3a55;
+    text-align: center;
+    letter-spacing: 0.3px;
+    user-select: none;
+  }
+  .hint span { color: #3a5070; }
+</style>
+</head>
+<body>
+
+<!-- ── CONTROLS ── -->
+<div class="panel">
+  <div>
+    <h1>Story Creator</h1>
+    <div class="subtitle">Instagram Highlights Template</div>
+  </div>
+
+  <!-- Background -->
+  <div class="section">
+    <div class="section-title">Background</div>
+    <div class="upload-area" id="bgArea">
+      <input type="file" accept="image/*" id="bgInput">
+      <div class="icon">🖼</div>
+      <div>Click to upload background</div>
+    </div>
+    <img class="thumb-preview" id="bgThumb">
+  </div>
+
+  <!-- Screenshot -->
+  <div class="section">
+    <div class="section-title">Results Screenshot</div>
+    <div class="upload-area" id="ssArea">
+      <input type="file" accept="image/*" id="ssInput">
+      <div class="icon">📱</div>
+      <div>Click to upload screenshot</div>
+    </div>
+    <img class="thumb-preview" id="ssThumb">
+    <div class="field">
+      <label>Corner Radius</label>
+      <div class="slider-row">
+        <input type="range" id="cornerRadius" min="0" max="100" value="40">
+        <span class="slider-val" id="cornerRadiusVal">40</span>
+      </div>
+    </div>
+    <div class="field">
+      <label>Scale %</label>
+      <div class="slider-row">
+        <input type="range" id="ssScale" min="15" max="95" value="62">
+        <span class="slider-val" id="ssScaleVal">62</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Text -->
+  <div class="section">
+    <div class="section-title">Text</div>
+    <div class="row2">
+      <div class="field">
+        <label>Prefix text</label>
+        <input type="text" id="tPrefix" value="Yes.. ">
+      </div>
+      <div class="field">
+        <label>Client name</label>
+        <input type="text" id="tName" value="Jack">
+      </div>
+    </div>
+    <div class="field">
+      <label>Middle text</label>
+      <input type="text" id="tMiddle" value=" with another ">
+    </div>
+    <div class="row2">
+      <div class="field">
+        <label>Amount</label>
+        <input type="text" id="tAmount" value="$1,500">
+      </div>
+      <div class="field">
+        <label>Emoji</label>
+        <input type="text" id="tEmoji" value="😎">
+      </div>
+    </div>
+    <div class="field">
+      <label>Font Size</label>
+      <div class="slider-row">
+        <input type="range" id="fontSize" min="24" max="100" value="56">
+        <span class="slider-val" id="fontSizeVal">56</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Amount Badge Colors -->
+  <div class="section">
+    <div class="section-title">Amount Badge</div>
+    <div class="color-row">
+      <input type="color" id="badgeColor1" value="#00d4ff">
+      <span class="color-label">Gradient start</span>
+      <input type="color" id="badgeColor2" value="#0044ff">
+      <span class="color-label">Gradient end</span>
+    </div>
+    <div class="color-row">
+      <input type="color" id="badgeTextColor" value="#002244">
+      <span class="color-label">Text color</span>
+    </div>
+  </div>
+
+  <!-- Logo -->
+  <div class="section">
+    <div class="section-title">Logo (optional)</div>
+    <div class="upload-area" id="logoArea">
+      <input type="file" accept="image/*" id="logoInput">
+      <div class="icon">✦</div>
+      <div>Click to upload logo</div>
+    </div>
+    <img class="thumb-preview" id="logoThumb">
+    <div class="field">
+      <label>Logo Size</label>
+      <div class="slider-row">
+        <input type="range" id="logoSize" min="40" max="220" value="100">
+        <span class="slider-val" id="logoSizeVal">100</span>
+      </div>
+    </div>
+  </div>
+
+  <button class="download-btn" id="downloadBtn">⬇ Download Story (1080×1920)</button>
+</div>
+
+<!-- ── PREVIEW ── -->
+<div class="preview-area">
+  <canvas id="canvas" width="1080" height="1920"></canvas>
+  <div class="hint">
+    Click to select &nbsp;·&nbsp; <span>Drag</span> to reposition &nbsp;·&nbsp; <span>Drag ↘ corner</span> to resize screenshot
+  </div>
+</div>
+
+<script>
+// ─────────────────────────────────────────────────────────────
+//  Canvas & constants
+// ─────────────────────────────────────────────────────────────
+const canvas = document.getElementById('canvas');
+const ctx    = canvas.getContext('2d');
+const W = 1080, H = 1920;
+
+// ─────────────────────────────────────────────────────────────
+//  Mutable state  (positions in canvas-space: 0..W, 0..H)
+// ─────────────────────────────────────────────────────────────
+let bgImg = null, ssImg = null, logoImg = null;
+
+// Screenshot
+let ssCenter = { x: W / 2, y: H * 0.55 };   // center point
+let ssScale  = 0.62;                           // width as fraction of W
+
+// Text block
+let textPos  = { x: W / 2, y: H * 0.19 };    // center-x / middle-y
+
+// Which element is "selected" for the dashed UI overlay
+let activeEl = null;  // 'ss' | 'text' | null
+
+// Hit-test bounding boxes (updated every draw)
+let ssBBox   = null;  // { x, y, w, h }
+let textBBox = null;  // { x, y, w, h }
+
+// Drag state
+let dragging    = null;   // 'ss' | 'ss-resize' | 'text'
+let dragAnchor  = {};     // saved values at drag start
+
+// ─────────────────────────────────────────────────────────────
+//  Image helpers
+// ─────────────────────────────────────────────────────────────
+function loadImageFile(file, cb) {
+  const r = new FileReader();
+  r.onload = e => { const i = new Image(); i.onload = () => cb(i); i.src = e.target.result; };
+  r.readAsDataURL(file);
+}
+
+function setupUpload(areaId, inputId, thumbId, setter) {
+  const area  = document.getElementById(areaId);
+  const input = document.getElementById(inputId);
+  const thumb = document.getElementById(thumbId);
+  input.addEventListener('change', e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    loadImageFile(file, img => {
+      setter(img);
+      area.classList.add('loaded');
+      area.querySelector('div:last-child').textContent = '✓ ' + file.name.slice(0, 24);
+      thumb.src = img.src;
+      thumb.style.display = 'block';
+      draw();
+    });
+  });
+}
+
+setupUpload('bgArea',   'bgInput',   'bgThumb',   img => { bgImg   = img; });
+setupUpload('ssArea',   'ssInput',   'ssThumb',   img => { ssImg   = img; });
+setupUpload('logoArea', 'logoInput', 'logoThumb', img => { logoImg = img; });
+
+// ─────────────────────────────────────────────────────────────
+//  Slider / input wiring
+// ─────────────────────────────────────────────────────────────
+const sliderDefs = [
+  ['cornerRadius','cornerRadiusVal'],
+  ['fontSize','fontSizeVal'],
+  ['logoSize','logoSizeVal'],
+];
+sliderDefs.forEach(([id, valId]) => {
+  const el = document.getElementById(id);
+  const lbl = document.getElementById(valId);
+  el.addEventListener('input', () => { lbl.textContent = el.value; draw(); });
+});
+
+// ssScale slider syncs with the ssScale variable
+const ssScaleSlider = document.getElementById('ssScale');
+const ssScaleVal    = document.getElementById('ssScaleVal');
+ssScaleSlider.addEventListener('input', () => {
+  ssScale = parseInt(ssScaleSlider.value) / 100;
+  ssScaleVal.textContent = ssScaleSlider.value;
+  draw();
+});
+
+// Text + color inputs
+['tPrefix','tName','tMiddle','tAmount','tEmoji',
+ 'badgeColor1','badgeColor2','badgeTextColor'].forEach(id => {
+  document.getElementById(id).addEventListener('input', draw);
+});
+
+// ─────────────────────────────────────────────────────────────
+//  Drawing helpers
+// ─────────────────────────────────────────────────────────────
+function coverImage(img, x, y, w, h) {
+  const scale = Math.max(w / img.width, h / img.height);
+  const sw = img.width * scale, sh = img.height * scale;
+  ctx.drawImage(img,
+    -(sw - w) / 2 / scale, -(sh - h) / 2 / scale,
+    sw / scale, sh / scale,
+    x, y, w, h
+  );
+}
+
+function roundRectPath(x, y, w, h, r) {
+  r = Math.min(r, w / 2, h / 2);
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y,     x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x,     y + h, r);
+  ctx.arcTo(x,     y + h, x,     y,     r);
+  ctx.arcTo(x,     y,     x + w, y,     r);
+  ctx.closePath();
+}
+
+// ─────────────────────────────────────────────────────────────
+//  Main draw
+// ─────────────────────────────────────────────────────────────
+function draw(exporting = false) {
+  ctx.clearRect(0, 0, W, H);
+
+  // ── 1. Background ──
+  if (bgImg) {
+    ctx.save();
+    ctx.beginPath(); ctx.rect(0, 0, W, H); ctx.clip();
+    coverImage(bgImg, 0, 0, W, H);
+    ctx.restore();
+    const ov = ctx.createLinearGradient(0, 0, 0, H);
+    ov.addColorStop(0,   'rgba(4,8,20,0.55)');
+    ov.addColorStop(0.4, 'rgba(4,8,20,0.35)');
+    ov.addColorStop(1,   'rgba(4,8,20,0.65)');
+    ctx.fillStyle = ov; ctx.fillRect(0, 0, W, H);
+  } else {
+    const bg = ctx.createLinearGradient(0, 0, 0, H);
+    bg.addColorStop(0,   '#040c1e');
+    bg.addColorStop(0.5, '#071828');
+    bg.addColorStop(1,   '#030810');
+    ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H);
+  }
+
+  // ── 2. Screenshot ──
+  const cornerR = parseInt(document.getElementById('cornerRadius').value);
+  if (ssImg) {
+    const ssW  = W * ssScale;
+    const ssH  = ssW * (ssImg.height / ssImg.width);
+    const ssX  = ssCenter.x - ssW / 2;
+    const ssY  = ssCenter.y - ssH / 2;
+    const rPx  = cornerR / 100 * Math.min(ssW, ssH) * 0.5;
+
+    // Store bbox for hit-testing
+    ssBBox = { x: ssX, y: ssY, w: ssW, h: ssH };
+
+    // Glow
+    ctx.save();
+    ctx.shadowColor = 'rgba(0,160,255,0.35)'; ctx.shadowBlur = 80; ctx.shadowOffsetY = 16;
+    roundRectPath(ssX, ssY, ssW, ssH, rPx);
+    ctx.fillStyle = 'rgba(0,100,200,0.01)'; ctx.fill();
+    ctx.restore();
+
+    // Image
+    ctx.save();
+    roundRectPath(ssX, ssY, ssW, ssH, rPx); ctx.clip();
+    ctx.drawImage(ssImg, ssX, ssY, ssW, ssH);
+    ctx.restore();
+
+    // Border
+    ctx.save();
+    roundRectPath(ssX, ssY, ssW, ssH, rPx);
+    ctx.strokeStyle = 'rgba(0,200,255,0.18)'; ctx.lineWidth = 3; ctx.stroke();
+    ctx.restore();
+
+    // Selection overlay (not exported)
+    if (!exporting && activeEl === 'ss') {
+      drawSsHandles(ssX, ssY, ssW, ssH, rPx);
+    }
+  } else {
+    ssBBox = null;
+  }
+
+  // ── 3. Text ──
+  const fontSize = parseInt(document.getElementById('fontSize').value);
+  const prefix   = document.getElementById('tPrefix').value;
+  const name     = document.getElementById('tName').value;
+  const middle   = document.getElementById('tMiddle').value;
+  const amount   = document.getElementById('tAmount').value;
+  const emoji    = document.getElementById('tEmoji').value;
+  const c1       = document.getElementById('badgeColor1').value;
+  const c2       = document.getElementById('badgeColor2').value;
+  const cTxt     = document.getElementById('badgeTextColor').value;
+
+  const fontStr = `bold ${fontSize}px -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif`;
+  ctx.save();
+  ctx.font         = fontStr;
+  ctx.textBaseline = 'middle';
+
+  const badgePadH = fontSize * 0.34;
+  const badgePadV = fontSize * 0.14;
+  const badgeH    = fontSize + badgePadV * 2;
+  const badgeR    = badgeH / 2;
+
+  const wPrefix = ctx.measureText(prefix).width;
+  const wName   = ctx.measureText(name).width;
+  const wMiddle = ctx.measureText(middle).width;
+  const wAmount = ctx.measureText(amount).width;
+  const wBadge  = wAmount + badgePadH * 2;
+  const wEmoji  = ctx.measureText(emoji).width;
+  const gap     = fontSize * 0.22;
+  const totalW  = wPrefix + wName + wMiddle + wBadge + gap + wEmoji;
+
+  // Text starts at textPos.x - totalW/2  (centered on textPos.x)
+  let x = textPos.x - totalW / 2;
+  const textY = textPos.y;
+
+  // Store bbox for hit-testing
+  const bboxPad = fontSize * 0.6;
+  textBBox = {
+    x: x - bboxPad * 0.5,
+    y: textY - badgeH / 2 - bboxPad * 0.5,
+    w: totalW + bboxPad,
+    h: badgeH + bboxPad
+  };
+
+  ctx.shadowColor = 'rgba(0,0,0,0.7)'; ctx.shadowBlur = 14; ctx.shadowOffsetY = 3;
+
+  // Prefix
+  ctx.fillStyle = '#ffffff';
+  ctx.fillText(prefix, x, textY);
+  x += wPrefix;
+
+  // Name + underline
+  ctx.fillStyle = '#ffffff';
+  ctx.fillText(name, x, textY);
+  ctx.shadowBlur = 0;
+  ctx.strokeStyle = '#ffffff';
+  ctx.lineWidth = Math.max(3, fontSize * 0.055);
+  ctx.beginPath();
+  ctx.moveTo(x, textY + fontSize * 0.58);
+  ctx.lineTo(x + wName, textY + fontSize * 0.58);
+  ctx.stroke();
+  ctx.shadowBlur = 14;
+  x += wName;
+
+  // Middle
+  ctx.fillStyle = '#ffffff';
+  ctx.fillText(middle, x, textY);
+  x += wMiddle;
+
+  // Badge
+  ctx.shadowBlur = 30; ctx.shadowColor = c1 + '88';
+  const badgeGrad = ctx.createLinearGradient(x, 0, x + wBadge, 0);
+  badgeGrad.addColorStop(0, c1); badgeGrad.addColorStop(1, c2);
+  roundRectPath(x, textY - badgeH / 2, wBadge, badgeH, badgeR);
+  ctx.fillStyle = badgeGrad; ctx.fill();
+  ctx.shadowBlur = 0;
+  ctx.fillStyle = cTxt;
+  ctx.fillText(amount, x + badgePadH, textY);
+  x += wBadge + gap;
+
+  // Emoji
+  ctx.shadowBlur = 14; ctx.shadowColor = 'rgba(0,0,0,0.5)';
+  ctx.fillStyle = '#ffffff';
+  ctx.fillText(emoji, x, textY);
+  ctx.restore();
+
+  // Text selection overlay
+  if (!exporting && activeEl === 'text') {
+    drawTextHandle();
+  }
+
+  // ── 4. Logo ──
+  if (logoImg) {
+    const logoSize = parseInt(document.getElementById('logoSize').value);
+    const lH = logoSize * 1.2;
+    const lW = lH * (logoImg.width / logoImg.height);
+    ctx.save();
+    ctx.globalAlpha = 0.88;
+    ctx.drawImage(logoImg, (W - lW) / 2, H * 0.885, lW, lH);
+    ctx.restore();
+  }
+}
+
+// ─────────────────────────────────────────────────────────────
+//  Handle / overlay drawing
+// ─────────────────────────────────────────────────────────────
+const HANDLE_R   = 18;   // corner dot radius (canvas px)
+const RESIZE_R   = 22;   // resize handle radius
+
+function drawSsHandles(x, y, w, h, r) {
+  ctx.save();
+
+  // Dashed selection border
+  ctx.setLineDash([24, 14]);
+  ctx.strokeStyle = 'rgba(0, 180, 255, 0.75)';
+  ctx.lineWidth   = 4;
+  roundRectPath(x, y, w, h, r);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Corner dots (top-left, top-right, bottom-left)
+  [[x, y], [x + w, y], [x, y + h]].forEach(([cx, cy]) => {
+    ctx.beginPath();
+    ctx.arc(cx, cy, HANDLE_R, 0, Math.PI * 2);
+    ctx.fillStyle   = '#ffffff';
+    ctx.shadowColor = 'rgba(0,120,255,0.6)';
+    ctx.shadowBlur  = 12;
+    ctx.fill();
+    ctx.shadowBlur = 0;
+    ctx.strokeStyle = '#0088ff';
+    ctx.lineWidth   = 3;
+    ctx.stroke();
+  });
+
+  // Resize handle — bottom-right (bigger, distinct)
+  const rx = x + w, ry = y + h;
+  ctx.beginPath();
+  ctx.arc(rx, ry, RESIZE_R, 0, Math.PI * 2);
+  ctx.fillStyle   = '#0077ff';
+  ctx.shadowColor = 'rgba(0,180,255,0.8)';
+  ctx.shadowBlur  = 18;
+  ctx.fill();
+  ctx.shadowBlur = 0;
+  ctx.strokeStyle = '#ffffff';
+  ctx.lineWidth   = 3;
+  ctx.stroke();
+  // Arrow icon inside resize handle
+  ctx.save();
+  ctx.strokeStyle = '#ffffff';
+  ctx.lineWidth   = 3;
+  ctx.lineCap     = 'round';
+  const s = RESIZE_R * 0.5;
+  ctx.beginPath(); ctx.moveTo(rx - s, ry - s); ctx.lineTo(rx + s, ry + s); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(rx + s - s * 0.8, ry + s); ctx.lineTo(rx + s, ry + s); ctx.lineTo(rx + s, ry + s - s * 0.8); ctx.stroke();
+  ctx.restore();
+
+  ctx.restore();
+}
+
+function drawTextHandle() {
+  if (!textBBox) return;
+  ctx.save();
+  ctx.setLineDash([20, 12]);
+  ctx.strokeStyle = 'rgba(255, 220, 60, 0.65)';
+  ctx.lineWidth   = 3;
+  ctx.strokeRect(textBBox.x, textBBox.y, textBBox.w, textBBox.h);
+  ctx.setLineDash([]);
+  ctx.restore();
+}
+
+// ─────────────────────────────────────────────────────────────
+//  Coordinate conversion
+// ─────────────────────────────────────────────────────────────
+function toCanvasPos(e) {
+  const rect = canvas.getBoundingClientRect();
+  const sx   = W / rect.width;
+  const sy   = H / rect.height;
+  const src  = e.touches ? e.touches[0] : e;
+  return {
+    x: (src.clientX - rect.left) * sx,
+    y: (src.clientY - rect.top)  * sy,
+  };
+}
+
+function inRect(p, bbox, pad = 0) {
+  if (!bbox) return false;
+  return p.x >= bbox.x - pad && p.x <= bbox.x + bbox.w + pad &&
+         p.y >= bbox.y - pad && p.y <= bbox.y + bbox.h + pad;
+}
+
+// ─────────────────────────────────────────────────────────────
+//  Mouse / touch interaction
+// ─────────────────────────────────────────────────────────────
+canvas.addEventListener('mousedown',  onPointerDown);
+canvas.addEventListener('mousemove',  onPointerMove);
+canvas.addEventListener('mouseup',    onPointerUp);
+canvas.addEventListener('mouseleave', onPointerUp);
+canvas.addEventListener('touchstart', onPointerDown, { passive: false });
+canvas.addEventListener('touchmove',  onPointerMove, { passive: false });
+canvas.addEventListener('touchend',   onPointerUp);
+
+function onPointerDown(e) {
+  e.preventDefault();
+  const p = toCanvasPos(e);
+
+  // ── Hit test: screenshot resize handle (bottom-right corner) ──
+  if (ssBBox) {
+    const rx = ssBBox.x + ssBBox.w;
+    const ry = ssBBox.y + ssBBox.h;
+    const dist = Math.hypot(p.x - rx, p.y - ry);
+    if (dist <= RESIZE_R * 2.5) {
+      dragging   = 'ss-resize';
+      activeEl   = 'ss';
+      dragAnchor = {
+        mx:    p.x,
+        origScale: ssScale,
+      };
+      draw();
+      return;
+    }
+  }
+
+  // ── Hit test: screenshot body ──
+  if (inRect(p, ssBBox)) {
+    dragging   = 'ss';
+    activeEl   = 'ss';
+    dragAnchor = {
+      mx: p.x, my: p.y,
+      ox: ssCenter.x, oy: ssCenter.y,
+    };
+    draw();
+    return;
+  }
+
+  // ── Hit test: text ──
+  if (inRect(p, textBBox, 20)) {
+    dragging   = 'text';
+    activeEl   = 'text';
+    dragAnchor = {
+      mx: p.x, my: p.y,
+      ox: textPos.x, oy: textPos.y,
+    };
+    draw();
+    return;
+  }
+
+  // Click on empty space → deselect
+  activeEl = null;
+  draw();
+}
+
+function onPointerMove(e) {
+  e.preventDefault();
+  const p = toCanvasPos(e);
+
+  if (dragging === 'ss') {
+    ssCenter.x = dragAnchor.ox + (p.x - dragAnchor.mx);
+    ssCenter.y = dragAnchor.oy + (p.y - dragAnchor.my);
+    draw();
+  } else if (dragging === 'ss-resize') {
+    // Drag right to scale up, left to scale down
+    const dx      = p.x - dragAnchor.mx;
+    const newScale = Math.min(0.96, Math.max(0.12, dragAnchor.origScale + dx / W * 2));
+    ssScale = newScale;
+    // Sync slider
+    ssScaleSlider.value      = Math.round(newScale * 100);
+    ssScaleVal.textContent   = Math.round(newScale * 100);
+    draw();
+  } else if (dragging === 'text') {
+    textPos.x = dragAnchor.ox + (p.x - dragAnchor.mx);
+    textPos.y = dragAnchor.oy + (p.y - dragAnchor.my);
+    draw();
+  } else {
+    // Update cursor based on hover
+    updateCursor(p);
+  }
+}
+
+function onPointerUp(e) {
+  dragging = null;
+  canvas.style.cursor = 'default';
+}
+
+function updateCursor(p) {
+  // Resize handle
+  if (ssBBox) {
+    const rx = ssBBox.x + ssBBox.w;
+    const ry = ssBBox.y + ssBBox.h;
+    if (Math.hypot(p.x - rx, p.y - ry) <= RESIZE_R * 2.5) {
+      canvas.style.cursor = 'nwse-resize'; return;
+    }
+    if (inRect(p, ssBBox)) { canvas.style.cursor = 'grab'; return; }
+  }
+  if (inRect(p, textBBox, 20)) { canvas.style.cursor = 'grab'; return; }
+  canvas.style.cursor = 'default';
+}
+
+// While dragging, use 'grabbing'
+canvas.addEventListener('mousedown', () => {
+  if (dragging) canvas.style.cursor = dragging === 'ss-resize' ? 'nwse-resize' : 'grabbing';
+});
+
+// ─────────────────────────────────────────────────────────────
+//  Download (no handles)
+// ─────────────────────────────────────────────────────────────
+document.getElementById('downloadBtn').addEventListener('click', () => {
+  const prev = activeEl;
+  activeEl = null;
+  draw(true);   // render without selection handles
+  const a = document.createElement('a');
+  a.download = 'story-highlight.png';
+  a.href = canvas.toDataURL('image/png');
+  a.click();
+  activeEl = prev;
+  draw();       // restore with handles
+});
+
+// ─────────────────────────────────────────────────────────────
+//  Initial render
+// ─────────────────────────────────────────────────────────────
+draw();
+</script>
+</body>
+</html>
