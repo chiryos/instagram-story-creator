@@ -1,0 +1,1356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Global Network — Build Together. Grow Everywhere.</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --black:#080809;
+  --s1:#101012;--s2:#141416;--s3:#1a1a1e;
+  --b1:rgba(255,255,255,0.06);--b2:rgba(255,255,255,0.09);--b3:rgba(255,255,255,0.13);
+  --t1:#ececec;--t2:#8a8a94;--t3:#52525c;
+}
+html{scroll-behavior:smooth}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--black);color:var(--t1);line-height:1.6;overflow-x:hidden;-webkit-font-smoothing:antialiased}
+::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:var(--black)}::-webkit-scrollbar-thumb{background:#222226;border-radius:3px}
+
+/* ── GRAIN OVERLAY ── */
+.grain{
+  position:fixed;inset:0;z-index:9000;pointer-events:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.88' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='240' height='240' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-repeat:repeat;background-size:240px 240px;
+  opacity:0.28;mix-blend-mode:overlay;
+}
+/* second grain — coarser, soft-light for depth */
+.grain-2{
+  position:fixed;inset:0;z-index:8999;pointer-events:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n2'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.62' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n2)'/%3E%3C/svg%3E");
+  background-repeat:repeat;background-size:180px 180px;
+  opacity:0.14;mix-blend-mode:soft-light;
+}
+
+/* ── AMBIENT BLOBS ── */
+.ambs{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden}
+.amb{position:absolute;border-radius:50%;mix-blend-mode:screen}
+.amb-1{width:700px;height:700px;top:-200px;left:-250px;background:radial-gradient(ellipse,rgba(205,205,220,0.11) 0%,transparent 65%);filter:blur(80px)}
+.amb-2{width:500px;height:400px;top:8%;right:-180px;background:radial-gradient(ellipse,rgba(190,190,212,0.08) 0%,transparent 65%);filter:blur(90px)}
+.amb-3{width:650px;height:500px;top:38%;left:-180px;background:radial-gradient(ellipse,rgba(198,198,218,0.09) 0%,transparent 65%);filter:blur(100px)}
+.amb-4{width:550px;height:550px;top:58%;right:-120px;background:radial-gradient(ellipse,rgba(192,192,210,0.07) 0%,transparent 65%);filter:blur(85px)}
+.amb-5{width:600px;height:400px;bottom:28%;left:8%;background:radial-gradient(ellipse,rgba(200,200,222,0.08) 0%,transparent 65%);filter:blur(95px)}
+.amb-6{width:500px;height:500px;bottom:-120px;right:4%;background:radial-gradient(ellipse,rgba(192,192,210,0.07) 0%,transparent 65%);filter:blur(80px)}
+.amb-7{width:800px;height:600px;top:80%;left:-100px;background:radial-gradient(ellipse,rgba(195,195,215,0.06) 0%,transparent 65%);filter:blur(110px)}
+
+/* ── UTILS ── */
+.container{max-width:1140px;margin:0 auto;padding:0 28px;position:relative;z-index:1}
+.btn{display:inline-flex;align-items:center;gap:7px;padding:10px 22px;border-radius:9999px;font-size:13px;font-weight:500;cursor:pointer;transition:all 0.25s ease;text-decoration:none;border:none;letter-spacing:0.01em}
+.btn-primary{background:#ececec;color:#0a0a0c;border:1px solid rgba(255,255,255,0.15)}
+.btn-primary:hover{background:#fff;box-shadow:0 0 28px rgba(255,255,255,0.1);transform:translateY(-1px)}
+.btn-ghost{background:transparent;color:var(--t2);border:1px solid var(--b2)}
+.btn-ghost:hover{color:var(--t1);border-color:var(--b3);background:rgba(255,255,255,0.03);transform:translateY(-1px)}
+.btn-dark{background:var(--s2);color:var(--t2);border:1px solid var(--b2)}
+.btn-dark:hover{color:var(--t1);border-color:var(--b3);background:var(--s3);transform:translateY(-1px)}
+
+/* ── FADE-UP ── */
+.fade{opacity:0;transform:translateY(22px);transition:opacity 0.8s ease,transform 0.8s ease}
+.fade.in{opacity:1;transform:none}
+.d1{transition-delay:0.08s}.d2{transition-delay:0.16s}.d3{transition-delay:0.24s}.d4{transition-delay:0.32s}.d5{transition-delay:0.40s}
+
+/* ──────────────────────────────────────
+   NAV — FLOATING ISLAND
+────────────────────────────────────── */
+@keyframes nav-entrance{
+  from{opacity:0;transform:translateX(-50%) translateY(-120%)}
+  to  {opacity:1;transform:translateX(-50%) translateY(0)}
+}
+@keyframes menu-item-in{
+  from{opacity:0;transform:translateY(-8px)}
+  to  {opacity:1;transform:translateY(0)}
+}
+@keyframes dropdown-slide{
+  from{opacity:0;transform:translateX(-50%) translateY(-6px) scale(0.98)}
+  to  {opacity:1;transform:translateX(-50%) translateY(0)    scale(1)}
+}
+
+nav{
+  position:fixed;top:16px;left:50%;
+  transform:translateX(-50%) scale(1);
+  z-index:999;
+  width:520px;max-width:calc(100% - 32px);
+  height:52px;border-radius:40px;
+  background:rgba(10,10,20,0.90);
+  backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+  border:1px solid rgba(255,255,255,0.08);
+  box-shadow:0 8px 32px rgba(0,0,0,0.4),0 2px 8px rgba(0,0,0,0.2),inset 0 1px 0 rgba(255,255,255,0.05);
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 14px 0 16px;
+  transition:transform 0.35s ease,background 0.35s ease;
+  animation:nav-entrance 0.7s cubic-bezier(0.34,1.56,0.64,1) 0.3s both;
+}
+nav.scrolled{
+  transform:translateX(-50%) scale(0.97);
+  background:rgba(10,10,20,0.96);
+}
+.nav-in{display:contents}
+.logo{display:flex;align-items:center;gap:9px;text-decoration:none;flex-shrink:0;transition:transform 0.3s cubic-bezier(0.34,1.56,0.64,1)}
+.logo.menu-open{transform:rotate(10deg) scale(1.05)}
+.logo-mark{width:26px;height:26px;border-radius:7px;background:linear-gradient(145deg,#2a2a2e,#1a1a1e);border:1px solid var(--b3);display:flex;align-items:center;justify-content:center;box-shadow:inset 0 1px 0 rgba(255,255,255,0.07);flex-shrink:0}
+.logo-mark svg{width:13px;height:13px;color:#c8c8d2}
+.logo-text{font-size:14px;font-weight:600;color:var(--t1);letter-spacing:-0.01em;white-space:nowrap}
+.nav-links{display:none}
+.nav-sign{display:none}
+.hamburger{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:5px;cursor:pointer;padding:6px;background:none;border:none;
+  width:32px;height:32px;border-radius:9999px;flex-shrink:0;
+}
+.hamburger span{
+  display:block;width:18px;height:1.5px;
+  background:rgba(255,255,255,0.68);border-radius:2px;
+  transform-origin:center;
+  transition:transform 0.28s cubic-bezier(0.4,0,0.2,1),opacity 0.22s ease;
+}
+.hamburger.open span:nth-child(1){transform:rotate(45deg) translateY(6.5px)}
+.hamburger.open span:nth-child(2){opacity:0;transform:scaleX(0)}
+.hamburger.open span:nth-child(3){transform:rotate(-45deg) translateY(-6.5px)}
+
+/* Island dropdown */
+.mob-menu{
+  display:none;
+  position:fixed;top:76px;left:50%;z-index:998;
+  width:520px;max-width:calc(100% - 32px);
+  border-radius:16px;
+  background:rgba(10,10,20,0.92);
+  backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+  border:1px solid rgba(0,228,255,0.12);
+  box-shadow:0 8px 32px rgba(0,0,0,0.4),0 2px 8px rgba(0,0,0,0.2),inset 0 1px 0 rgba(255,255,255,0.04);
+  overflow:hidden;
+}
+.mob-menu.open{
+  display:block;
+  animation:dropdown-slide 0.32s cubic-bezier(0.34,1.56,0.64,1) both;
+}
+.mob-menu ul{list-style:none}
+.mob-menu ul li a{
+  display:block;padding:14px 20px;
+  font-size:14px;font-weight:400;color:rgba(255,255,255,0.62);
+  text-decoration:none;
+  border-bottom:1px solid rgba(255,255,255,0.055);
+  transition:color 0.2s ease,background 0.2s ease;
+}
+.mob-menu ul li:last-child a{border-bottom:none}
+.mob-menu ul li a:hover{color:rgba(255,255,255,0.95);background:rgba(255,255,255,0.04)}
+.mob-menu ul li:nth-child(1) a{animation:menu-item-in 0.35s cubic-bezier(0.34,1.56,0.64,1) 0ms   both}
+.mob-menu ul li:nth-child(2) a{animation:menu-item-in 0.35s cubic-bezier(0.34,1.56,0.64,1) 60ms  both}
+.mob-menu ul li:nth-child(3) a{animation:menu-item-in 0.35s cubic-bezier(0.34,1.56,0.64,1) 120ms both}
+.mob-menu ul li:nth-child(4) a{animation:menu-item-in 0.35s cubic-bezier(0.34,1.56,0.64,1) 180ms both}
+.mob-menu-btns{display:none}
+
+/* ──────────────────────────────────────
+   HERO
+────────────────────────────────────── */
+.hero{
+  min-height:100vh;
+  display:flex;flex-direction:column;align-items:center;
+  text-align:center;padding:130px 28px 0;
+  position:relative;overflow:hidden;
+  padding-bottom:min(52vw,760px);
+}
+/* top ambient glow behind text */
+.hero-glow{
+  position:absolute;top:20%;left:50%;transform:translateX(-50%);
+  width:600px;height:400px;
+  background:radial-gradient(ellipse,rgba(200,200,220,0.05) 0%,transparent 65%);
+  pointer-events:none;mix-blend-mode:screen;filter:blur(30px);
+}
+.hero-eyebrow{display:inline-flex;align-items:center;gap:8px;padding:6px 14px;border-radius:9999px;background:rgba(255,255,255,0.03);border:1px solid var(--b2);font-size:12px;font-weight:400;color:var(--t2);margin-bottom:32px;letter-spacing:0.02em}
+.hero-eyebrow-dot{width:5px;height:5px;border-radius:50%;background:rgba(180,180,200,0.4);box-shadow:0 0 6px rgba(180,180,200,0.3);animation:pdot 3s ease-in-out infinite}
+@keyframes pdot{0%,100%{opacity:1}50%{opacity:0.35}}
+.hero h1{font-size:clamp(36px,6vw,72px);font-weight:700;letter-spacing:-0.035em;line-height:1.08;margin-bottom:22px;color:var(--t1);max-width:680px}
+.hero h1 em{font-style:normal;color:var(--t2)}
+.hero-sub{font-size:16px;font-weight:300;color:var(--t2);max-width:460px;margin:0 auto 36px;line-height:1.7}
+.hero-btns{display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:56px;flex-wrap:wrap}
+
+/* ── GLOBE SECTION ── */
+.globe-section{
+  position:absolute;bottom:0;left:50%;
+  transform:translateX(-50%);
+  width:min(110vw,1600px);
+  z-index:1;
+  pointer-events:none;
+}
+/* the canvas wrapper with bottom fade */
+.globe-mask{
+  display:block;line-height:0;
+  -webkit-mask-image:radial-gradient(ellipse 82% 105% at 50% 100%, black 38%, transparent 78%);
+  mask-image:radial-gradient(ellipse 82% 105% at 50% 100%, black 38%, transparent 78%);
+}
+#gcanvas{display:block;width:100%}
+/* hero text above globe */
+.hero-eyebrow,.hero h1,.hero-sub,.hero-btns{position:relative;z-index:3}
+
+/* ── TRUST STRIP ── */
+.trust-strip{padding:40px 0;border-top:1px solid var(--b1);border-bottom:1px solid var(--b1);position:relative;z-index:1}
+.trust-inner{display:flex;align-items:center;justify-content:center;flex-direction:column;gap:22px}
+.trust-label{font-size:11px;color:var(--t3);letter-spacing:0.08em;text-transform:uppercase}
+.trust-logos{display:flex;align-items:center;justify-content:center;gap:44px;flex-wrap:wrap}
+.trust-logo{height:18px;width:72px;background:rgba(255,255,255,0.08);border-radius:3px;opacity:0.3}
+
+/* ──────────────────────────────────────
+   STATS
+────────────────────────────────────── */
+.stats-section{padding:100px 0}
+.stats-head{text-align:center;margin-bottom:64px}
+.stats-head h2{font-size:clamp(26px,3.5vw,40px);font-weight:600;letter-spacing:-0.025em;margin-bottom:12px}
+.stats-head p{font-size:15px;color:var(--t2);max-width:380px;margin:0 auto;line-height:1.65}
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);background:linear-gradient(145deg,#111113,#0f0f11);border:1px solid var(--b1);border-radius:16px;overflow:hidden;box-shadow:inset 0 1px 0 rgba(255,255,255,0.05)}
+.stat-cell{padding:36px 28px;text-align:center;position:relative}
+.stat-cell:not(:last-child)::after{content:'';position:absolute;right:0;top:20%;bottom:20%;width:1px;background:var(--b1)}
+.stat-num{font-size:clamp(34px,3.5vw,48px);font-weight:700;letter-spacing:-0.04em;color:var(--t1);margin-bottom:6px;line-height:1}
+.stat-lbl{font-size:12px;color:var(--t3);letter-spacing:0.02em}
+
+/* ──────────────────────────────────────
+   SECTIONS SHARED
+────────────────────────────────────── */
+.section{padding:110px 0}
+.section-alt{background:linear-gradient(180deg,transparent,rgba(255,255,255,0.012),transparent)}
+.sec-label{font-size:11px;font-weight:500;color:var(--t3);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:16px;display:block}
+.sec-h2{font-size:clamp(26px,3.2vw,38px);font-weight:600;letter-spacing:-0.025em;line-height:1.18;margin-bottom:14px}
+.sec-p{font-size:15px;color:var(--t2);line-height:1.7;max-width:420px}
+.sec-list{list-style:none;margin:24px 0 32px;display:flex;flex-direction:column;gap:11px}
+.sec-list li{display:flex;align-items:center;gap:10px;font-size:14px;color:var(--t2)}
+.sec-li-dot{width:4px;height:4px;border-radius:50%;background:var(--t3);flex-shrink:0}
+.split{display:grid;grid-template-columns:1fr 1fr;gap:72px;align-items:center}
+.split.rev{direction:rtl}.split.rev>*{direction:ltr}
+
+/* ── MOCKUP CARDS ── */
+.mock{background:linear-gradient(160deg,#161618 0%,#111113 70%,#0f0f11 100%);border:1px solid var(--b2);border-radius:18px;overflow:hidden;box-shadow:0 2px 0 rgba(255,255,255,0.05) inset,0 32px 80px rgba(0,0,0,0.55),0 0 0 1px rgba(255,255,255,0.02);position:relative}
+.mock::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.08),transparent)}
+.mock-bar{display:flex;align-items:center;gap:5px;padding:13px 16px 10px;background:rgba(255,255,255,0.015);border-bottom:1px solid var(--b1)}
+.md{width:8px;height:8px;border-radius:50%}
+.md-r{background:#2e1818;border:1px solid #3e2020}.md-y{background:#2e2a14;border:1px solid #3e3818}.md-g{background:#142a1e;border:1px solid #1c3a28}
+.mock-tl{margin-left:8px;font-size:10px;color:var(--t3);letter-spacing:0.04em}
+.mock-live{margin-left:auto;font-size:9px;font-weight:500;color:var(--t3);letter-spacing:0.06em;display:flex;align-items:center;gap:4px}
+.mock-live-dot{width:5px;height:5px;border-radius:50%;background:#2a5a38;box-shadow:0 0 6px rgba(42,90,56,0.8);animation:pdot 2s ease-in-out infinite}
+.mock-body{padding:18px}
+.n-item{display:flex;gap:12px;align-items:flex-start;margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid var(--b1)}
+.n-item:last-child{margin-bottom:0;padding-bottom:0;border-bottom:none}
+.n-ico{width:32px;height:32px;border-radius:8px;flex-shrink:0;background:var(--s2);border:1px solid var(--b1);display:flex;align-items:center;justify-content:center}
+.n-ico svg{width:14px;height:14px;color:var(--t3)}
+.n-tag{font-size:9px;font-weight:600;letter-spacing:0.08em;padding:2px 7px;border-radius:9999px;border:1px solid var(--b1);color:var(--t3);display:inline-block;margin-bottom:5px}
+.n-title{font-size:12px;font-weight:500;color:var(--t2);line-height:1.4;margin-bottom:3px}
+.n-meta{font-size:10px;color:var(--t3)}
+.p-head{display:flex;align-items:center;gap:12px;margin-bottom:18px}
+.p-av{width:40px;height:40px;border-radius:50%;flex-shrink:0;background:linear-gradient(145deg,#2a2a30,#1a1a20);border:1px solid var(--b2);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;color:var(--t2)}
+.p-name{font-size:14px;font-weight:600;color:var(--t1)}
+.p-sub{font-size:11px;color:var(--t3);margin-top:2px}
+.p-badge{margin-left:auto;font-size:10px;padding:3px 9px;border-radius:9999px;background:rgba(255,255,255,0.04);border:1px solid var(--b2);color:var(--t3);letter-spacing:0.04em}
+.p-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.p-box{background:linear-gradient(140deg,#141416,#0f0f11);border:1px solid var(--b1);border-radius:10px;padding:12px;box-shadow:inset 0 1px 0 rgba(255,255,255,0.03)}
+.p-box-v{font-size:18px;font-weight:700;color:var(--t1);letter-spacing:-0.03em}
+.p-box-l{font-size:10px;color:var(--t3);margin-top:3px;letter-spacing:0.02em}
+.bars-wrap{background:linear-gradient(140deg,#141416,#0f0f11);border:1px solid var(--b1);border-radius:10px;padding:12px}
+.bars-lbl{font-size:10px;color:var(--t3);letter-spacing:0.04em;margin-bottom:10px}
+.bars{display:flex;align-items:flex-end;gap:5px;height:48px}
+.bar{flex:1;border-radius:3px 3px 0 0;background:linear-gradient(180deg,rgba(180,175,200,0.25),rgba(140,135,160,0.12));border-top:1px solid rgba(200,195,220,0.2);transition:opacity 0.2s}
+.bar:hover{opacity:0.8}
+.match-bar{display:flex;align-items:center;gap:9px;background:var(--s2);border:1px solid var(--b1);border-radius:8px;padding:9px 12px;margin-bottom:12px}
+.match-bar svg{width:12px;height:12px;color:var(--t3);flex-shrink:0}
+.match-bar-txt{font-size:12px;color:var(--t3)}
+.match-filters{display:flex;gap:7px;margin-bottom:14px;flex-wrap:wrap}
+.mf{font-size:10px;padding:4px 11px;border-radius:9999px;border:1px solid var(--b1);color:var(--t3);cursor:pointer;background:transparent}
+.mf.a{border-color:var(--b2);color:var(--t2);background:rgba(255,255,255,0.03)}
+.match-row{display:flex;align-items:center;gap:10px;padding:11px;border-radius:10px;background:linear-gradient(140deg,#161618,#111113);border:1px solid var(--b1);margin-bottom:8px;transition:border-color 0.2s}
+.match-row:hover{border-color:var(--b2)}
+.m-av{width:34px;height:34px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:rgba(200,200,220,0.8);background:linear-gradient(145deg,#2a2a30,#1a1a20);border:1px solid var(--b2)}
+.m-name{font-size:12px;font-weight:600;color:var(--t2)}
+.m-role{font-size:10px;color:var(--t3);margin-top:1px}
+.m-score{margin-left:auto;font-size:12px;font-weight:600;color:var(--t2);text-align:right;white-space:nowrap}
+.m-score-lbl{font-size:9px;color:var(--t3);font-weight:400}
+
+/* ── SECURITY ORBIT ── */
+.sec-orbit{padding:120px 0;position:relative}
+.sec-orbit::before{content:'';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:600px;height:500px;background:radial-gradient(ellipse,rgba(140,130,180,0.04) 0%,transparent 65%);pointer-events:none}
+
+/* ── CHANNELS GRID ── */
+.channels-grid{
+  display:grid;grid-template-columns:repeat(2,1fr);gap:12px;
+  max-width:860px;margin:0 auto;
+}
+.ch-card{
+  display:flex;align-items:flex-start;gap:14px;
+  padding:20px 20px;border-radius:14px;
+  background:linear-gradient(145deg,rgba(18,18,28,0.7),rgba(12,12,20,0.5));
+  border:1px solid rgba(255,255,255,0.06);
+  text-decoration:none;
+  transition:border-color 0.22s ease,background 0.22s ease,transform 0.22s ease;
+  cursor:pointer;
+}
+.ch-card:hover{
+  border-color:rgba(60,120,255,0.22);
+  background:linear-gradient(145deg,rgba(22,22,38,0.85),rgba(14,14,26,0.7));
+  transform:translateY(-2px);
+}
+.ch-icon{
+  flex-shrink:0;
+  width:44px;height:44px;display:flex;align-items:center;justify-content:center;
+  background:linear-gradient(145deg,rgba(255,255,255,0.07),rgba(255,255,255,0.02));
+  border-radius:12px;
+  border:1px solid rgba(255,255,255,0.09);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,0.08),0 4px 12px rgba(0,0,0,0.3);
+  color:rgba(200,200,215,0.88);
+  transition:color 0.22s ease,background 0.22s ease;
+}
+.ch-icon svg{width:18px;height:18px;display:block}
+.ch-card:hover .ch-icon{
+  background:linear-gradient(145deg,rgba(255,255,255,0.11),rgba(255,255,255,0.04));
+  color:rgba(230,230,245,1);
+}
+.ch-info{flex:1;min-width:0}
+.ch-name{font-size:13px;font-weight:600;color:var(--t1);margin-bottom:4px;letter-spacing:-0.01em}
+.ch-desc{font-size:11.5px;color:var(--t3);line-height:1.55}
+.ch-badge{
+  flex-shrink:0;min-width:28px;height:20px;
+  background:rgba(60,120,255,0.15);
+  border:1px solid rgba(60,120,255,0.2);
+  border-radius:9999px;
+  font-size:10px;font-weight:600;color:rgba(100,160,255,0.9);
+  display:flex;align-items:center;justify-content:center;
+  padding:0 7px;letter-spacing:0.01em;
+  align-self:flex-start;margin-top:2px;
+}
+.orbit-cw{display:flex;justify-content:center;margin-bottom:72px}
+.orb{position:relative;width:300px;height:300px;flex-shrink:0}
+.orb-ring{position:absolute;border-radius:50%;border:1px solid rgba(255,255,255,0.05);top:50%;left:50%;transform:translate(-50%,-50%)}
+.orb-r1{width:130px;height:130px;border-color:rgba(255,255,255,0.07);animation:spin 14s linear infinite}
+.orb-r2{width:210px;height:210px;animation:spin 22s linear infinite reverse}
+.orb-r3{width:290px;height:290px;animation:spin 35s linear infinite}
+@keyframes spin{from{transform:translate(-50%,-50%) rotate(0)}to{transform:translate(-50%,-50%) rotate(360deg)}}
+.orb-core{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:64px;height:64px;z-index:5}
+.orb-core-inner{width:64px;height:64px;border-radius:14px;background:linear-gradient(160deg,#202024,#141416);border:1px solid var(--b3);display:flex;align-items:center;justify-content:center;box-shadow:0 0 40px rgba(140,130,180,0.08),inset 0 1px 0 rgba(255,255,255,0.08)}
+.orb-core-inner svg{width:28px;height:28px;color:rgba(210,210,230,0.7)}
+.orb-ico{position:absolute;width:34px;height:34px;border-radius:9px;background:linear-gradient(145deg,#1c1c20,#141416);border:1px solid var(--b2);display:flex;align-items:center;justify-content:center;box-shadow:0 8px 24px rgba(0,0,0,0.4),inset 0 1px 0 rgba(255,255,255,0.05);top:50%;left:50%}
+.orb-ico svg{width:15px;height:15px;color:var(--t3)}
+.orb-r1 .orb-ico{animation:anti-spin 14s linear infinite}
+.orb-r2 .orb-ico{animation:anti-spin 22s linear infinite reverse}
+.orb-r3 .orb-ico{animation:anti-spin 35s linear infinite}
+@keyframes anti-spin{from{transform:translate(-50%,-50%) rotate(0)}to{transform:translate(-50%,-50%) rotate(-360deg)}}
+.orb-ico-top{top:-17px;left:50%}.orb-ico-right{top:50%;left:calc(100% + 17px)}.orb-ico-bottom{top:calc(100% + 17px);left:50%}.orb-ico-left{top:50%;left:-17px}
+.orb-feat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;max-width:720px;margin:0 auto}
+.orb-feat{background:linear-gradient(145deg,#131315,#0f0f11);border:1px solid var(--b1);border-radius:14px;padding:20px;box-shadow:inset 0 1px 0 rgba(255,255,255,0.03);transition:border-color 0.25s,box-shadow 0.25s}
+.orb-feat:hover{border-color:var(--b2);box-shadow:inset 0 1px 0 rgba(255,255,255,0.05),0 0 24px rgba(0,0,0,0.3)}
+.orb-feat-ico{width:32px;height:32px;border-radius:8px;background:var(--s2);border:1px solid var(--b1);display:flex;align-items:center;justify-content:center;margin-bottom:12px}
+.orb-feat-ico svg{width:14px;height:14px;color:var(--t3)}
+.orb-feat-title{font-size:13px;font-weight:600;color:var(--t2);margin-bottom:5px}
+.orb-feat-desc{font-size:12px;color:var(--t3);line-height:1.55}
+
+/* ── TESTIMONIALS ── */
+.testi{padding:110px 0}
+.testi-hd{text-align:center;margin-bottom:56px}
+.testi-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.tc{background:linear-gradient(160deg,#141416 0%,#101012 100%);border:1px solid var(--b1);border-radius:18px;padding:28px;box-shadow:inset 0 1px 0 rgba(255,255,255,0.04);transition:border-color 0.25s,transform 0.25s;position:relative;overflow:hidden}
+.tc::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.06),transparent)}
+.tc:hover{border-color:var(--b2);transform:translateY(-2px)}
+.tc-stars{display:flex;gap:3px;margin-bottom:14px}
+.tc-stars svg{width:12px;height:12px;fill:rgba(180,160,80,0.5);color:rgba(180,160,80,0.5)}
+.tc-q{font-size:14px;color:var(--t2);line-height:1.7;margin-bottom:22px;font-weight:300}
+.tc-author{display:flex;align-items:center;gap:10px}
+.tc-av{width:36px;height:36px;border-radius:50%;flex-shrink:0;background:linear-gradient(145deg,#2a2a30,#1a1a20);border:1px solid var(--b2);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:var(--t2)}
+.tc-name{font-size:13px;font-weight:500;color:var(--t1)}
+.tc-title{font-size:11px;color:var(--t3);margin-top:1px}
+.tc-co{margin-left:auto;font-size:10px;letter-spacing:0.04em;color:var(--t3);border:1px solid var(--b1);border-radius:9999px;padding:3px 10px}
+
+/* ── FAQ ── */
+.faq{padding:100px 0}
+.faq-hd{text-align:center;margin-bottom:52px}
+.faq-hd a{color:var(--t2);text-decoration:none;border-bottom:1px solid var(--b2);padding-bottom:1px}
+.faq-list{max-width:680px;margin:0 auto}
+.faq-item{border-bottom:1px solid var(--b1)}
+.faq-item:first-child{border-top:1px solid var(--b1)}
+.faq-q{display:flex;align-items:center;justify-content:space-between;padding:20px 0;cursor:pointer;gap:16px;list-style:none}
+.faq-q::-webkit-details-marker{display:none}
+.faq-q-text{font-size:14px;font-weight:500;color:var(--t1)}
+.faq-icon{width:24px;height:24px;border-radius:50%;border:1px solid var(--b1);flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all 0.25s}
+.faq-icon svg{width:11px;height:11px;color:var(--t3);transition:transform 0.3s}
+details[open] .faq-icon{border-color:var(--b2)}
+details[open] .faq-icon svg{transform:rotate(45deg);color:var(--t2)}
+.faq-a{font-size:14px;color:var(--t2);line-height:1.7;padding:0 0 20px;max-width:580px;font-weight:300}
+
+/* ── CTA ── */
+.cta-wrap{padding:60px 0 100px}
+.cta-box{background:linear-gradient(160deg,#141416 0%,#0f0f11 50%,#111113 100%);border:1px solid var(--b2);border-radius:22px;padding:80px 60px;text-align:center;position:relative;overflow:hidden;box-shadow:inset 0 1px 0 rgba(255,255,255,0.05)}
+.cta-box::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.1),transparent)}
+.cta-glow{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:500px;height:300px;background:radial-gradient(ellipse,rgba(140,130,180,0.04) 0%,transparent 65%);pointer-events:none}
+.cta-box h2{font-size:clamp(28px,3.5vw,42px);font-weight:600;letter-spacing:-0.03em;margin-bottom:14px;position:relative;z-index:1}
+.cta-box p{font-size:15px;color:var(--t2);max-width:420px;margin:0 auto 36px;line-height:1.65;font-weight:300;position:relative;z-index:1}
+.cta-box .btn{position:relative;z-index:1}
+
+/* ── FOOTER ── */
+footer{border-top:1px solid var(--b1);padding:72px 0 40px;position:relative;z-index:1}
+.foot-top{display:grid;grid-template-columns:1.5fr 1fr 1fr 1fr 1fr;gap:48px;margin-bottom:60px}
+.foot-brand .logo{margin-bottom:12px}
+.foot-tagline{font-size:13px;color:var(--t3);line-height:1.6;max-width:220px;font-weight:300}
+.foot-col-h{font-size:12px;font-weight:500;color:var(--t2);margin-bottom:14px;letter-spacing:0.01em}
+.foot-col ul{list-style:none;display:flex;flex-direction:column;gap:9px}
+.foot-col ul li a{font-size:12px;color:var(--t3);text-decoration:none;transition:color 0.2s}
+.foot-col ul li a:hover{color:var(--t2)}
+.foot-bottom{display:flex;align-items:center;justify-content:space-between;padding-top:28px;border-top:1px solid var(--b1);flex-wrap:wrap;gap:14px}
+.foot-socials{display:flex;gap:9px}
+.soc{width:32px;height:32px;border-radius:7px;border:1px solid var(--b1);display:flex;align-items:center;justify-content:center;color:var(--t3);transition:all 0.2s;text-decoration:none}
+.soc:hover{border-color:var(--b2);color:var(--t2)}
+.soc svg{width:14px;height:14px}
+.foot-copy{font-size:11px;color:var(--t3);letter-spacing:0.02em}
+
+/* ── STATIC SECTION GLOWS ── */
+.stats-section{position:relative}
+.stats-section::before{
+  content:'';position:absolute;top:-80px;left:50%;transform:translateX(-50%);
+  width:800px;height:450px;
+  background:radial-gradient(ellipse,rgba(200,200,220,0.07) 0%,transparent 62%);
+  pointer-events:none;filter:blur(50px);z-index:0;
+}
+.section{position:relative}
+.section:nth-of-type(odd)::before{
+  content:'';position:absolute;top:10%;right:-120px;
+  width:520px;height:480px;
+  background:radial-gradient(ellipse,rgba(195,195,215,0.05) 0%,transparent 65%);
+  pointer-events:none;filter:blur(70px);z-index:0;
+}
+.section:nth-of-type(even)::before{
+  content:'';position:absolute;bottom:10%;left:-100px;
+  width:500px;height:460px;
+  background:radial-gradient(ellipse,rgba(190,190,215,0.05) 0%,transparent 65%);
+  pointer-events:none;filter:blur(65px);z-index:0;
+}
+.sec-orbit::after{
+  content:'';position:absolute;bottom:5%;right:-80px;
+  width:480px;height:420px;
+  background:radial-gradient(ellipse,rgba(198,198,218,0.06) 0%,transparent 65%);
+  pointer-events:none;filter:blur(60px);z-index:0;
+}
+.testi{position:relative}
+.testi::before{
+  content:'';position:absolute;top:-60px;left:50%;transform:translateX(-50%);
+  width:640px;height:380px;
+  background:radial-gradient(ellipse,rgba(196,196,218,0.06) 0%,transparent 62%);
+  pointer-events:none;filter:blur(55px);z-index:0;
+}
+.faq{position:relative}
+.faq::before{
+  content:'';position:absolute;bottom:-20px;left:15%;
+  width:540px;height:400px;
+  background:radial-gradient(ellipse,rgba(192,192,214,0.05) 0%,transparent 65%);
+  pointer-events:none;filter:blur(65px);z-index:0;
+}
+.cta-glow{
+  background:radial-gradient(ellipse,rgba(180,175,210,0.08) 0%,transparent 65%) !important;
+  width:600px !important;height:400px !important;
+}
+
+/* ── RESPONSIVE ── */
+@media(max-width:960px){
+  .stats-row{grid-template-columns:1fr 1fr}.stat-cell:nth-child(2)::after{display:none}
+  .split{grid-template-columns:1fr;gap:44px}.split.rev{direction:ltr}
+  .testi-grid{grid-template-columns:1fr 1fr}
+  .foot-top{grid-template-columns:1fr 1fr 1fr}.foot-brand{grid-column:1/-1}
+  .orb-feat-grid{grid-template-columns:1fr 1fr}
+  .channels-grid{grid-template-columns:1fr}
+}
+@media(max-width:680px){
+  nav .nav-links,.nav-sign{display:none}.hamburger{display:flex}.btn.nav-cta-d{display:none}
+  .hero h1{font-size:36px}
+  .stats-row{grid-template-columns:1fr}.stat-cell::after{display:none!important}.stat-cell{border-bottom:1px solid var(--b1)}
+  .testi-grid{grid-template-columns:1fr}
+  .foot-top{grid-template-columns:1fr 1fr}.foot-brand{grid-column:1/-1}
+  .cta-box{padding:48px 24px}
+  .orb-feat-grid{grid-template-columns:1fr}
+  .foot-bottom{flex-direction:column;align-items:flex-start}
+}
+</style>
+</head>
+<body>
+
+<!-- ── GRAIN OVERLAY ── -->
+<div class="grain" aria-hidden="true"></div>
+<div class="grain-2" aria-hidden="true"></div>
+
+<!-- ── AMBIENT LIGHT BLOBS ── -->
+<div class="ambs" aria-hidden="true">
+  <div class="amb amb-1"></div>
+  <div class="amb amb-2"></div>
+  <div class="amb amb-3"></div>
+  <div class="amb amb-4"></div>
+  <div class="amb amb-5"></div>
+  <div class="amb amb-6"></div>
+  <div class="amb amb-7"></div>
+</div>
+
+<!-- ═══ NAV — FLOATING ISLAND ═══ -->
+<nav id="island-nav">
+  <a href="#" class="logo" id="nav-logo">
+    <div class="logo-mark">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+        <circle cx="12" cy="12" r="10"/>
+        <path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+      </svg>
+    </div>
+    <span class="logo-text">Global Network</span>
+  </a>
+  <button class="hamburger" id="nav-toggle" aria-label="Toggle menu" aria-expanded="false">
+    <span></span><span></span><span></span>
+  </button>
+</nav>
+
+<!-- Island dropdown -->
+<div class="mob-menu" id="mob">
+  <ul>
+    <li><a href="#">Community</a></li>
+    <li><a href="#">Channels</a></li>
+    <li><a href="#">Resources</a></li>
+    <li><a href="#">Join Telegram</a></li>
+  </ul>
+</div>
+
+<!-- ═══ HERO ═══ -->
+<section class="hero">
+  <div class="hero-glow"></div>
+
+  <div class="hero-eyebrow fade">
+    <div class="hero-eyebrow-dot"></div>
+    377+ members · 80+ countries · Telegram
+  </div>
+
+  <h1 class="fade d1">
+    Climb Every Hour,<br><em>Win Every Day</em>
+  </h1>
+
+  <p class="hero-sub fade d2">
+    The private Telegram community where entrepreneurs, traders,
+    creators, and visionaries connect, share deals, and grow together — globally.
+  </p>
+
+  <div class="hero-btns fade d3">
+    <a href="#" class="btn btn-primary" style="padding:11px 26px;font-size:13px;gap:8px;">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12L7.16 13.67l-2.956-.924c-.643-.204-.657-.643.136-.953l11.57-4.461c.537-.194 1.006.131.984.889z"/></svg>
+      Join on Telegram
+    </a>
+    <a href="#" class="btn btn-ghost" style="padding:11px 26px;font-size:13px;">Browse Channels</a>
+  </div>
+
+  <!-- GLOBE -->
+  <div class="globe-section">
+    <div class="globe-mask">
+      <canvas id="gcanvas"></canvas>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ TRUST STRIP ═══ -->
+<div class="trust-strip">
+  <div class="container">
+    <div class="trust-inner">
+      <span class="trust-label">10 Focused Channels · 24/7 Active · 80+ Countries · Free to Join</span>
+      <div class="trust-logos">
+        <div class="trust-logo"></div><div class="trust-logo"></div><div class="trust-logo"></div>
+        <div class="trust-logo"></div><div class="trust-logo"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ STATS ═══ -->
+<section class="stats-section">
+  <div class="container">
+    <div class="stats-head fade">
+      <h2>One Community.<br>Infinite Opportunities.</h2>
+      <p>A private, high-signal Telegram group where real conversations lead to real results — every single day.</p>
+    </div>
+    <div class="stats-row fade d1">
+      <div class="stat-cell"><div class="stat-num">377+</div><div class="stat-lbl">Active members</div></div>
+      <div class="stat-cell"><div class="stat-num">10</div><div class="stat-lbl">Focused channels</div></div>
+      <div class="stat-cell"><div class="stat-num">80+</div><div class="stat-lbl">Countries represented</div></div>
+      <div class="stat-cell"><div class="stat-num">$200M+</div><div class="stat-lbl">Network worth</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ FEATURE 1 ═══ -->
+<section class="section section-alt">
+  <div class="container">
+    <div class="split">
+      <div class="fade">
+        <span class="sec-label">💰 Deal Flow · 📊 Trading</span>
+        <h2 class="sec-h2">Where the Money<br>Conversations Happen</h2>
+        <p class="sec-p">The Deal Flow channel surfaces real investment opportunities, partnerships, and domain assets — daily. Trading goes deeper with market analysis, stock picks, and strategies from members actively in the markets.</p>
+        <ul class="sec-list">
+          <li><span class="sec-li-dot"></span>Live deal sourcing and partnership offers</li>
+          <li><span class="sec-li-dot"></span>Market signals, tickers, and trade setups</li>
+          <li><span class="sec-li-dot"></span>Domain portfolios and acquisition opportunities</li>
+        </ul>
+        <a href="#" class="btn btn-dark" style="gap:7px;">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12L7.16 13.67l-2.956-.924c-.643-.204-.657-.643.136-.953l11.57-4.461c.537-.194 1.006.131.984.889z"/></svg>
+          Join on Telegram
+        </a>
+      </div>
+      <div class="fade d2">
+        <div class="mock">
+          <div class="mock-bar">
+            <div class="md md-r"></div><div class="md md-y"></div><div class="md md-g"></div>
+            <span class="mock-tl">💰 Deal Flow</span>
+            <span class="mock-live"><span class="mock-live-dot"></span>55 NEW</span>
+          </div>
+          <div class="mock-body">
+            <div class="n-item">
+              <div class="n-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/></svg></div>
+              <div><span class="n-tag">DOMAINS</span><div class="n-title">We have all these domains available — looking for serious buyers or JV partners</div><div class="n-meta">Vincent · 14:59</div></div>
+            </div>
+            <div class="n-item">
+              <div class="n-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/></svg></div>
+              <div><span class="n-tag">TRADING</span><div class="n-title">LMT — $194B backlog, WM defense contracts. Entry at support, target +18%</div><div class="n-meta">Drew Daniels · Thu · 27 replies</div></div>
+            </div>
+            <div class="n-item">
+              <div class="n-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg></div>
+              <div><span class="n-tag">OPPORTUNITY</span><div class="n-title">Looking to co-found a SaaS in the logistics space — need a technical partner</div><div class="n-meta">General · 14:31 · 1126 active</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ FEATURE 2 ═══ -->
+<section class="section">
+  <div class="container">
+    <div class="split rev">
+      <div class="fade d2">
+        <div class="mock">
+          <div class="mock-bar">
+            <div class="md md-r"></div><div class="md md-y"></div><div class="md md-g"></div>
+            <span class="mock-tl">📱 Creatorspace</span>
+            <span class="mock-live"><span class="mock-live-dot"></span>8 NEW</span>
+          </div>
+          <div class="mock-body">
+            <div class="p-head">
+              <div class="p-av">MA</div>
+              <div><div class="p-name">Matt</div><div class="p-sub">Content Creator · Creatorspace</div></div>
+              <div class="p-badge">CREATOR</div>
+            </div>
+            <div class="p-grid">
+              <div class="p-box"><div class="p-box-v">8</div><div class="p-box-l">New messages</div></div>
+              <div class="p-box"><div class="p-box-v">893</div><div class="p-box-l">Travel active</div></div>
+              <div class="p-box"><div class="p-box-v">87</div><div class="p-box-l">Health replies</div></div>
+              <div class="p-box"><div class="p-box-v">14</div><div class="p-box-l">Intros today</div></div>
+            </div>
+            <div class="bars-wrap">
+              <div class="bars-lbl">COMMUNITY ACTIVITY — THIS WEEK</div>
+              <div class="bars">
+                <div class="bar" style="height:45%"></div><div class="bar" style="height:62%"></div>
+                <div class="bar" style="height:55%"></div><div class="bar" style="height:78%"></div>
+                <div class="bar" style="height:90%"></div><div class="bar" style="height:68%"></div>
+                <div class="bar" style="height:95%"></div><div class="bar" style="height:82%"></div>
+                <div class="bar" style="height:100%"></div><div class="bar" style="height:88%"></div>
+                <div class="bar" style="height:92%"></div><div class="bar" style="height:75%"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="fade">
+        <span class="sec-label">📱 Creatorspace · 💡 Resources</span>
+        <h2 class="sec-h2">Build Your Audience.<br>Share What Works.</h2>
+        <p class="sec-p">Creatorspace is where content creators, brand builders, and marketers swap strategies and grow together. Resources is a curated library of tools, videos, and frameworks — shared by members who've already done it.</p>
+        <ul class="sec-list">
+          <li><span class="sec-li-dot"></span>Content strategy and platform growth tips</li>
+          <li><span class="sec-li-dot"></span>Curated YouTube breakdowns and frameworks</li>
+          <li><span class="sec-li-dot"></span>Tools, templates, and software recommendations</li>
+        </ul>
+        <a href="#" class="btn btn-dark" style="gap:7px;">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12L7.16 13.67l-2.956-.924c-.643-.204-.657-.643.136-.953l11.57-4.461c.537-.194 1.006.131.984.889z"/></svg>
+          Join on Telegram
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ FEATURE 3 ═══ -->
+<section class="section section-alt">
+  <div class="container">
+    <div class="split">
+      <div class="fade">
+        <span class="sec-label">💡 Technology · 📋 Intro</span>
+        <h2 class="sec-h2">Ship Faster. Meet<br>the Right People.</h2>
+        <p class="sec-p">Technology is where builders share tools, ask for mass-texting solutions, debate AI stacks, and stay sharp. Intro is your first stop — post who you are, what you do, and watch the right people find you.</p>
+        <ul class="sec-list">
+          <li><span class="sec-li-dot"></span>Tech stack advice and software debates</li>
+          <li><span class="sec-li-dot"></span>Mass texting, automation, and growth tools</li>
+          <li><span class="sec-li-dot"></span>Introduce yourself and get seen by 377+ members</li>
+        </ul>
+        <a href="#" class="btn btn-dark" style="gap:7px;">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12L7.16 13.67l-2.956-.924c-.643-.204-.657-.643.136-.953l11.57-4.461c.537-.194 1.006.131.984.889z"/></svg>
+          Join on Telegram
+        </a>
+      </div>
+      <div class="fade d2">
+        <div class="mock">
+          <div class="mock-bar">
+            <div class="md md-r"></div><div class="md md-y"></div><div class="md md-g"></div>
+            <span class="mock-tl">📋 intro</span>
+            <span class="mock-live"><span class="mock-live-dot"></span>14 NEW</span>
+          </div>
+          <div class="mock-body">
+            <div class="match-bar">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+              <span class="match-bar-txt">Search members by skill or country...</span>
+            </div>
+            <div class="match-filters">
+              <div class="mf a">All</div><div class="mf">Founders</div><div class="mf">Traders</div><div class="mf">Creators</div>
+            </div>
+            <div class="match-row">
+              <div class="m-av">DK</div>
+              <div style="flex:1"><div class="m-name">D K</div><div class="m-role">Looking veryyyy good 🔥 · New member intro</div></div>
+              <div class="m-score" style="font-size:10px;opacity:0.5">Wed</div>
+            </div>
+            <div class="match-row">
+              <div class="m-av">JB</div>
+              <div style="flex:1"><div class="m-name">Jeremy Boulerice</div><div class="m-role">Anyone in Alaska this summer? · Travel</div></div>
+              <div class="m-score" style="font-size:10px;opacity:0.5">Thu</div>
+            </div>
+            <div class="match-row">
+              <div class="m-av">BH</div>
+              <div style="flex:1"><div class="m-name">Bichar Hämid</div><div class="m-role">"God chose the foolish things..." · Wisdom</div></div>
+              <div class="m-score" style="font-size:10px;opacity:0.5">Tue</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ CHANNELS GRID ═══ -->
+<section class="sec-orbit">
+  <div class="container">
+    <div class="fade" style="text-align:center;margin-bottom:64px">
+      <span class="sec-label" style="display:block;text-align:center">Inside the Group</span>
+      <h2 class="sec-h2" style="text-align:center;max-width:480px;margin:0 auto 12px">10 Channels. Every<br>Conversation That Matters.</h2>
+      <p class="sec-p" style="text-align:center;margin:0 auto">From trading signals to travel tips to mindset — every channel is high-signal, low-noise, and member-driven.</p>
+    </div>
+    <div class="channels-grid fade d1">
+      <a href="#" class="ch-card">
+        <div class="ch-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="4" y1="9" x2="20" y2="9"/><line x1="4" y1="15" x2="20" y2="15"/><line x1="10" y1="3" x2="8" y2="21"/><line x1="16" y1="3" x2="14" y2="21"/></svg></div>
+        <div class="ch-info">
+          <div class="ch-name">General</div>
+          <div class="ch-desc">The main room — open discussions, hot takes, and daily conversation from 377+ builders worldwide.</div>
+        </div>
+        <div class="ch-badge">1126</div>
+      </a>
+      <a href="#" class="ch-card">
+        <div class="ch-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg></div>
+        <div class="ch-info">
+          <div class="ch-name">Deal Flow</div>
+          <div class="ch-desc">Active deals, domain portfolios, partnership offers, and investment opportunities — posted daily.</div>
+        </div>
+        <div class="ch-badge">55</div>
+      </a>
+      <a href="#" class="ch-card">
+        <div class="ch-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg></div>
+        <div class="ch-info">
+          <div class="ch-name">Creatorspace</div>
+          <div class="ch-desc">Content creators and brand builders share growth playbooks, platform hacks, and monetization strategies.</div>
+        </div>
+        <div class="ch-badge">8</div>
+      </a>
+      <a href="#" class="ch-card">
+        <div class="ch-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></div>
+        <div class="ch-info">
+          <div class="ch-name">Resources</div>
+          <div class="ch-desc">Curated links, YouTube breakdowns, frameworks, and tools shared by members who've already used them.</div>
+        </div>
+        <div class="ch-badge">new</div>
+      </a>
+      <a href="#" class="ch-card">
+        <div class="ch-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><line x1="9" y1="2" x2="9" y2="4"/><line x1="15" y1="2" x2="15" y2="4"/><line x1="9" y1="20" x2="9" y2="22"/><line x1="15" y1="20" x2="15" y2="22"/><line x1="20" y1="9" x2="22" y2="9"/><line x1="20" y1="15" x2="22" y2="15"/><line x1="2" y1="9" x2="4" y2="9"/><line x1="2" y1="15" x2="4" y2="15"/></svg></div>
+        <div class="ch-info">
+          <div class="ch-name">Technology</div>
+          <div class="ch-desc">Tech stack questions, AI tools, automation, mass-texting solutions, and what's actually working right now.</div>
+        </div>
+        <div class="ch-badge">new</div>
+      </a>
+      <a href="#" class="ch-card">
+        <div class="ch-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="7" y1="4" x2="7" y2="20"/><rect x="5" y="8" width="4" height="7" rx="0.5"/><line x1="17" y1="4" x2="17" y2="20"/><rect x="15" y="5" width="4" height="6" rx="0.5"/><line x1="12" y1="6" x2="12" y2="20"/><rect x="10" y="11" width="4" height="5" rx="0.5"/></svg></div>
+        <div class="ch-info">
+          <div class="ch-name">Trading</div>
+          <div class="ch-desc">Market analysis, stock picks, trade setups, and real-time signals from active traders in the group.</div>
+        </div>
+        <div class="ch-badge">27</div>
+      </a>
+      <a href="#" class="ch-card">
+        <div class="ch-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg></div>
+        <div class="ch-info">
+          <div class="ch-name">Travel</div>
+          <div class="ch-desc">Digital nomads, visa tips, city guides, meetups, and members connecting in every timezone.</div>
+        </div>
+        <div class="ch-badge">893</div>
+      </a>
+      <a href="#" class="ch-card">
+        <div class="ch-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
+        <div class="ch-info">
+          <div class="ch-name">intro</div>
+          <div class="ch-desc">Your first stop. Post who you are and what you do — and let 377+ members know you've arrived.</div>
+        </div>
+        <div class="ch-badge">14</div>
+      </a>
+      <a href="#" class="ch-card">
+        <div class="ch-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></div>
+        <div class="ch-info">
+          <div class="ch-name">Wisdom</div>
+          <div class="ch-desc">Philosophy, faith, mindset, and the ideas that shape how we think, lead, and build for the long game.</div>
+        </div>
+        <div class="ch-badge">new</div>
+      </a>
+      <a href="#" class="ch-card">
+        <div class="ch-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 19 9 5 6 12 2 12"/></svg></div>
+        <div class="ch-info">
+          <div class="ch-name">Health</div>
+          <div class="ch-desc">Sleep stacks, workout routines, lo-fi playlists, biohacking, and everything that keeps you performing.</div>
+        </div>
+        <div class="ch-badge">87</div>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ TESTIMONIALS ═══ -->
+<section class="testi" style="background:linear-gradient(180deg,transparent,rgba(255,255,255,0.01),transparent)">
+  <div class="container">
+    <div class="testi-hd fade">
+      <span class="sec-label" style="display:block;text-align:center">Member Stories</span>
+      <h2 class="sec-h2" style="text-align:center">Real People.<br>Real Results.</h2>
+      <p class="sec-p" style="text-align:center;margin:12px auto 0">Our members don't just network — they build, trade, and grow. Here's what they say.</p>
+    </div>
+    <div class="testi-grid">
+      <div class="tc fade d1">
+        <div class="tc-stars"><svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg><svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg><svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg><svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg><svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></div>
+        <p class="tc-q">"The Deal Flow channel alone paid for itself on day one. I picked up a domain portfolio deal in the first week, and the Trading signals have been incredibly precise. Best Telegram group I've ever joined."</p>
+        <div class="tc-author"><div class="tc-av">VK</div><div><div class="tc-name">Vincent K.</div><div class="tc-title">Entrepreneur & Investor</div></div><div class="tc-co">Deal Flow</div></div>
+      </div>
+      <div class="tc fade d2">
+        <div class="tc-stars"><svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg><svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg><svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg><svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg><svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></div>
+        <p class="tc-q">"I posted my intro in the group, got three collaboration requests by the next morning, and connected with a developer from Germany who's now my technical co-founder. This community is legitimately different."</p>
+        <div class="tc-author"><div class="tc-av">JM</div><div><div class="tc-name">John Magnor</div><div class="tc-title">Founder</div></div><div class="tc-co">General</div></div>
+      </div>
+      <div class="tc fade d3">
+        <div class="tc-stars"><svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg><svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg><svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg><svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg><svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></div>
+        <p class="tc-q">"The Creatorspace and Resources channels are worth their weight in gold. I've gotten better content strategy advice in this Telegram group than from any $2,000 course. The members here actually share what works."</p>
+        <div class="tc-author"><div class="tc-av">MA</div><div><div class="tc-name">Matt A.</div><div class="tc-title">Content Creator</div></div><div class="tc-co">Creatorspace</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ FAQ ═══ -->
+<section class="faq">
+  <div class="container">
+    <div class="faq-hd fade">
+      <span class="sec-label" style="display:block;text-align:center">Support</span>
+      <h2 class="sec-h2" style="text-align:center">Frequently Asked<br>Questions</h2>
+      <p class="sec-p" style="text-align:center;margin:12px auto 0">Have another question? <a href="#">Contact our team!</a></p>
+    </div>
+    <div class="faq-list fade d1">
+      <details class="faq-item">
+        <summary class="faq-q"><span class="faq-q-text">What is Global Network?</span><span class="faq-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></span></summary>
+        <p class="faq-a">Global Network is a private Telegram community for entrepreneurs, traders, creators, and builders. It spans 80+ countries with 377+ active members organized across 10 focused channels — from Deal Flow and Trading to Wisdom and Health. It's free to join and built entirely around high-signal, real conversations.</p>
+      </details>
+      <details class="faq-item">
+        <summary class="faq-q"><span class="faq-q-text">How do I join? Is it really free?</span><span class="faq-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></span></summary>
+        <p class="faq-a">Yes — completely free. Click any "Join on Telegram" button on this page, and you'll be taken directly to the group. Once inside, head to the #intro channel, post who you are and what you're working on, and you're in. No application, no waitlist, no fee.</p>
+      </details>
+      <details class="faq-item">
+        <summary class="faq-q"><span class="faq-q-text">What makes this different from other networking groups?</span><span class="faq-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></span></summary>
+        <p class="faq-a">Most communities are either too broad or too quiet. Global Network has structured channels so the right conversations happen in the right rooms — deals in Deal Flow, market talk in Trading, mindset in Wisdom. The members are doers, not lurkers. Conversations are active 24/7 across every timezone.</p>
+      </details>
+      <details class="faq-item">
+        <summary class="faq-q"><span class="faq-q-text">Who is this community for?</span><span class="faq-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></span></summary>
+        <p class="faq-a">Anyone who's building something, trading markets, creating content, traveling the world, or chasing growth. Whether you're a first-time founder or a seasoned investor, a freelancer or a CEO — if you're ambitious and want to be around other ambitious people, Global Network is for you.</p>
+      </details>
+      <details class="faq-item">
+        <summary class="faq-q"><span class="faq-q-text">Which channels should I join first?</span><span class="faq-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></span></summary>
+        <p class="faq-a">Start with #intro to introduce yourself, then jump into General for the main conversation. From there, follow what interests you — Deal Flow and Trading for business and markets, Creatorspace for content, Technology for tools, Travel for nomads, and Wisdom and Health when you want to go deeper.</p>
+      </details>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ CTA ═══ -->
+<div class="cta-wrap">
+  <div class="container">
+    <div class="cta-box fade">
+      <div class="cta-glow"></div>
+      <span class="sec-label" style="display:block;text-align:center;margin-bottom:20px">Free to Join</span>
+      <h2>Your People Are<br>Already Inside.</h2>
+      <p>377+ builders, traders, and creators are live right now across 10 channels. One tap and you're in.</p>
+      <a href="#" class="btn btn-primary" style="padding:12px 28px;font-size:13px;gap:9px;">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12L7.16 13.67l-2.956-.924c-.643-.204-.657-.643.136-.953l11.57-4.461c.537-.194 1.006.131.984.889z"/></svg>
+        Join on Telegram — It's Free
+      </a>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ FOOTER ═══ -->
+<footer>
+  <div class="container">
+    <div class="foot-top">
+      <div class="foot-brand">
+        <a href="#" class="logo" style="margin-bottom:10px;display:inline-flex">
+          <div class="logo-mark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></div>
+          <span class="logo-text">Global Network</span>
+        </a>
+        <p class="foot-tagline">Every City. Every Industry. One Telegram. Build Together. Grow Everywhere.</p>
+      </div>
+      <div class="foot-col"><div class="foot-col-h">Channels</div><ul><li><a href="#"># General</a></li><li><a href="#">💰 Deal Flow</a></li><li><a href="#">📊 Trading</a></li><li><a href="#">🌐 Travel</a></li></ul></div>
+      <div class="foot-col"><div class="foot-col-h">Community</div><ul><li><a href="#">📱 Creatorspace</a></li><li><a href="#">💡 Resources</a></li><li><a href="#">⚡ Technology</a></li><li><a href="#">📋 intro</a></li></ul></div>
+      <div class="foot-col"><div class="foot-col-h">Lifestyle</div><ul><li><a href="#">💭 Wisdom</a></li><li><a href="#">🏃 Health</a></li><li><a href="#">Join the Group</a></li><li><a href="#">Share with Friends</a></li></ul></div>
+      <div class="foot-col"><div class="foot-col-h">Legal</div><ul><li><a href="#">Privacy Policy</a></li><li><a href="#">Cookie Policy</a></li><li><a href="#">Terms of Service</a></li><li><a href="#">Community Rules</a></li></ul></div>
+    </div>
+    <div class="foot-bottom">
+      <div class="foot-socials">
+        <a href="#" class="soc"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12L7.16 13.67l-2.956-.924c-.643-.204-.657-.643.136-.953l11.57-4.461c.537-.194 1.006.131.984.889z"/></svg></a>
+        <a href="#" class="soc"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg></a>
+        <a href="#" class="soc"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg></a>
+      </div>
+      <p class="foot-copy">© Copyright Global Network 2026. All rights reserved.</p>
+    </div>
+  </div>
+</footer>
+
+<script>
+/* ──────────────────────────────────────────────────────
+   GLOBE — hacker network style, monochromatic gray/white/black
+────────────────────────────────────────────────────── */
+(function(){
+  'use strict';
+
+  const canvas = document.getElementById('gcanvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const DPR = Math.min(window.devicePixelRatio || 1, 2);
+
+  // ── Detailed continent polygons [lon, lat] ──
+  const LAND = [
+    // North America (detailed)
+    [[-168,71],[-155,60],[-149,60],[-140,58],[-135,54],[-130,54],[-124,49],[-124,47],[-122,38],[-118,34],[-117,32],[-110,23],[-105,20],[-90,16],[-85,16],[-84,10],[-76,8],[-78,8],[-80,10],[-80,25],[-72,18],[-70,19],[-70,40],[-75,43],[-75,45],[-77,44],[-83,42],[-83,46],[-87,47],[-90,47],[-96,49],[-100,49],[-110,49],[-120,49],[-120,54],[-123,52],[-127,50],[-130,54],[-132,56],[-136,58],[-138,60],[-142,60],[-152,58],[-152,60],[-160,60],[-162,62],[-164,63],[-165,64],[-163,68],[-162,70],[-168,71]],
+    // Greenland
+    [[-44,60],[-42,61],[-36,63],[-22,66],[-18,68],[-16,72],[-18,76],[-22,80],[-28,84],[-38,84],[-44,84],[-52,82],[-56,80],[-58,78],[-60,76],[-64,74],[-64,70],[-60,66],[-56,62],[-50,61],[-44,60]],
+    // Central America
+    [[-90,16],[-84,10],[-76,8],[-77,8],[-78,8],[-82,10],[-85,10],[-87,14],[-90,16]],
+    // South America (detailed)
+    [[-80,12],[-76,10],[-62,10],[-60,8],[-52,5],[-44,2],[-36,-4],[-34,-6],[-36,-10],[-38,-15],[-40,-20],[-44,-23],[-48,-28],[-50,-30],[-52,-34],[-56,-38],[-60,-42],[-65,-46],[-68,-52],[-65,-55],[-68,-56],[-72,-50],[-75,-50],[-72,-40],[-72,-30],[-70,-20],[-72,-14],[-75,-10],[-78,-4],[-80,0],[-80,8],[-80,12]],
+    // Europe (detailed)
+    [[-10,36],[-6,36],[0,36],[5,36],[10,36],[15,37],[20,38],[25,38],[28,40],[32,42],[32,44],[28,46],[26,46],[22,50],[20,52],[18,54],[14,56],[10,58],[8,60],[5,62],[4,62],[8,64],[14,64],[18,64],[20,70],[24,72],[20,72],[14,72],[8,70],[4,68],[0,62],[-4,62],[-6,58],[-8,52],[-10,44],[-10,36]],
+    // Scandinavia
+    [[5,58],[8,56],[10,56],[14,56],[18,56],[20,58],[22,60],[24,62],[26,62],[28,66],[28,70],[26,72],[20,70],[18,66],[14,64],[10,62],[8,62],[5,62],[5,58]],
+    // UK & Ireland
+    [[-5,50],[-3,50],[2,52],[2,54],[0,56],[-3,58],[-5,58],[-6,56],[-8,52],[-5,50]],
+    // Iceland
+    [[-24,63],[-14,64],[-12,65],[-13,66],[-18,66],[-22,65],[-24,63]],
+    // Africa (detailed)
+    [[-18,16],[-16,14],[-14,12],[-10,8],[-8,6],[-4,5],[0,5],[4,5],[8,5],[10,2],[14,-2],[16,-4],[20,-5],[24,-6],[28,-6],[32,-8],[36,-10],[40,-12],[40,-16],[44,-22],[44,-24],[38,-30],[36,-34],[28,-36],[20,-36],[16,-30],[14,-24],[10,-18],[10,-10],[10,0],[8,5],[4,5],[0,5],[-4,5],[-8,4],[-12,4],[-14,10],[-16,12],[-18,16]],
+    // Arabian Peninsula
+    [[32,30],[34,28],[36,22],[38,14],[40,12],[44,12],[50,16],[56,22],[58,24],[56,26],[50,28],[44,28],[38,28],[32,30]],
+    // Asia (very detailed)
+    [[32,42],[36,42],[40,42],[44,40],[48,38],[52,38],[56,38],[60,40],[64,42],[68,42],[72,38],[76,38],[78,34],[80,30],[80,26],[76,22],[72,20],[68,20],[68,22],[70,24],[74,28],[78,30],[80,28],[84,28],[88,26],[92,24],[96,22],[100,16],[104,12],[108,10],[108,4],[108,2],[104,1],[100,2],[98,6],[98,8],[100,14],[100,16],[96,20],[92,22],[88,22],[84,28],[80,34],[76,38],[76,40],[80,42],[84,42],[88,44],[92,48],[96,52],[100,54],[104,56],[108,58],[104,60],[96,58],[92,60],[88,60],[84,60],[80,62],[76,68],[68,68],[60,72],[52,68],[44,68],[40,66],[36,68],[32,66],[28,62],[24,58],[22,52],[24,50],[28,48],[32,46],[32,42]],
+    // Indian Subcontinent
+    [[68,22],[72,22],[76,10],[80,8],[82,10],[80,14],[76,20],[72,22]],
+    // SE Asia / Indochina
+    [[100,22],[104,20],[106,16],[104,12],[100,14],[98,16],[100,22]],
+    // Malay Peninsula
+    [[100,6],[102,4],[104,2],[104,4],[102,6],[100,6]],
+    // Japan
+    [[130,32],[132,34],[134,34],[136,36],[138,38],[140,40],[142,44],[140,44],[138,40],[136,36],[134,34],[132,32],[130,32]],
+    // Borneo
+    [[108,4],[110,2],[114,-2],[116,-4],[118,-2],[118,2],[116,4],[112,6],[108,4]],
+    // Sumatra
+    [[96,4],[100,2],[104,-2],[106,-4],[104,-4],[100,-2],[96,2],[96,4]],
+    // Java
+    [[106,-6],[108,-8],[110,-8],[112,-8],[114,-8],[116,-8],[114,-6],[110,-6],[106,-6]],
+    // Philippines
+    [[120,12],[122,12],[124,14],[122,16],[120,16],[118,14],[120,12]],
+    // Australia (detailed)
+    [[114,-22],[118,-20],[122,-18],[126,-16],[130,-12],[132,-12],[136,-12],[140,-14],[142,-12],[146,-18],[148,-20],[152,-22],[154,-24],[152,-28],[150,-32],[148,-36],[148,-40],[144,-38],[142,-36],[140,-36],[136,-34],[132,-32],[128,-30],[124,-28],[122,-26],[118,-26],[114,-26],[114,-22]],
+    // New Zealand (North)
+    [[174,-38],[178,-38],[178,-36],[176,-34],[174,-36],[174,-38]],
+    // New Zealand (South)
+    [[168,-46],[170,-46],[172,-44],[172,-42],[170,-44],[168,-46]],
+    // Madagascar
+    [[44,-14],[48,-14],[50,-18],[50,-22],[48,-24],[46,-24],[44,-22],[44,-18],[44,-14]],
+    // Sri Lanka
+    [[80,6],[82,8],[82,6],[80,6]],
+  ];
+
+  // ── City light positions [lon, lat] — 60+ major cities ──
+  const CITIES = [
+    // Americas
+    [-74,41],[-87,41],[-118,34],[-122,37],[-104,40],[-95,30],[-80,26],[-43,-23],[-58,-34],[-70,-33],[-77,1],[-66,10],[-84,10],
+    // Europe
+    [-0.1,51],[2,48],[13,52],[14,50],[16,48],[12,55],[18,59],[24,60],[30,60],[25,60],[2,51],[4,52],[-8,53],[23,38],[12,42],[2,41],[-4,40],[-9,38],
+    // Africa
+    [37,-7],[31,30],[18,34],[36,-1],[28,-26],[18,-34],[3,6],[7,4],[-17,15],
+    // Middle East / Asia
+    [55,25],[45,24],[44,33],[38,22],[67,33],[72,19],[77,29],[72,23],[80,13],[90,23],[88,22],[85,27],[76,10],[67,24],
+    // East Asia
+    [103,1],[104,14],[100,14],[116,40],[121,31],[114,22],[121,25],[127,37],[129,35],[135,35],[139,36],[141,43],
+    // SE Asia / Oceania
+    [107,-6],[110,-7],[115,-8],[123,11],[144,-38],[151,-34],[174,-37],[170,-46],
+  ];
+
+  // ── Pre-computed city properties (deterministic) ──
+  const CITY_GLOW_R    = CITIES.map((_, i) => 2.0 + (i % 4) * 0.55);
+  const CITY_PULSE_PH  = CITIES.map((_, i) => i * 0.618 * Math.PI * 2);
+
+  // ── Connection pairs for animated arcs ──
+  const CONNECTIONS = [
+    [0,13],[0,2],[0,3],[1,7],[2,3],[3,4],[3,13],[4,5],[4,19],[5,27],
+    [7,19],[8,27],[9,28],[10,42],[11,42],[13,19],[13,14],[14,15],
+    [19,27],[27,28],[28,29],[29,42],[29,43],[42,43],[43,44],[44,45],
+    [2,14],[0,7],[4,13],[5,19],[15,27],[28,43],[29,44],[42,45],
+    [1,13],[6,7],[10,11],[30,27],[31,28],[32,29],[27,42],[0,4],
+  ];
+
+  // ── Active animated arcs pool ──
+  const MAX_ARCS = 10;
+  const rng = (function(){ let s=42; return ()=>{ s=(s*1664525+1013904223)&0xffffffff; return (s>>>0)/0xffffffff; }; })();
+
+  function spawnArc(t0) {
+    const ci = Math.floor(rng() * CONNECTIONS.length);
+    return { ai: CONNECTIONS[ci][0], bi: CONNECTIONS[ci][1],
+             t: t0 !== undefined ? t0 : 0,
+             speed: 0.10 + rng() * 0.14 };
+  }
+  const arcs = Array.from({length: MAX_ARCS}, () => spawnArc(rng()));
+
+  // ── Fixed star field (outside globe) ──
+  const STARS = (function(){
+    const out = [];
+    const srng = (function(){ let s=77; return ()=>{ s=(s*6364136223846793005n||s*1664525+1013904223)&0xffffffff; return (s>>>0)/0xffffffff; }; })();
+    // simple seeded lcg
+    let ss = 99;
+    const sr = ()=>{ ss=(ss*1664525+1013904223)&0xffffffff; return (ss>>>0)/0xffffffff; };
+    for (let i=0; i<100; i++) {
+      const x=(sr()-0.5)*2.6, y=(sr()-0.5)*2.6;
+      if (Math.hypot(x,y) > 1.18) out.push({x,y,r:0.4+sr()*1.1,a:0.25+sr()*0.5});
+    }
+    return out;
+  })();
+
+  let W, H, CX, CY, R;
+  let autoRot = -30;
+  let scrollRot = 0, targetScrollRot = 0, lastT = 0;
+
+  function setup() {
+    const wrap = canvas.parentElement.parentElement;
+    const cw = wrap.clientWidth;
+    const ch = Math.round(cw * 0.52);
+    canvas.style.width  = cw + 'px';
+    canvas.style.height = ch + 'px';
+    canvas.width  = Math.round(cw * DPR);
+    canvas.height = Math.round(ch * DPR);
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    W = cw; H = ch; CX = W/2; CY = H; R = W * 0.47;
+  }
+
+  function proj(lon, lat, rot) {
+    const lam = (lon + rot) * Math.PI / 180;
+    const phi = lat * Math.PI / 180;
+    const c = Math.cos(phi);
+    return { x: c * Math.sin(lam), y: -Math.sin(phi), z: c * Math.cos(lam) };
+  }
+
+  // Spherical linear interpolation between two unit vectors
+  function slerp(a, b, t) {
+    const dot = Math.max(-1, Math.min(1, a.x*b.x + a.y*b.y + a.z*b.z));
+    const omega = Math.acos(dot);
+    if (omega < 0.0001) return { x:a.x, y:a.y, z:a.z };
+    const s = Math.sin(omega);
+    const fa = Math.sin((1-t)*omega)/s, fb = Math.sin(t*omega)/s;
+    return { x:fa*a.x+fb*b.x, y:fa*a.y+fb*b.y, z:fa*a.z+fb*b.z };
+  }
+
+  function drawFrame(rot, time) {
+    ctx.clearRect(0, 0, W, H);
+    const sc = R / 400; // scale factor for pixel sizes
+
+    // 1 ── Stars (drawn before globe, outside clip)
+    STARS.forEach(s => {
+      const sx = CX + s.x * R, sy = CY + s.y * R;
+      if (sx < -10 || sx > W+10 || sy < -10 || sy > H+10) return;
+      ctx.beginPath();
+      ctx.arc(sx, sy, s.r * sc * 0.9, 0, Math.PI*2);
+      ctx.fillStyle = `rgba(220,220,230,${s.a})`;
+      ctx.fill();
+    });
+
+    // 2 ── Sphere base: monochromatic gradient — white highlight → charcoal → near-black
+    const sg = ctx.createRadialGradient(
+      CX - R*0.32, CY - R*0.36, R*0.03,
+      CX, CY, R
+    );
+    sg.addColorStop(0,    'rgba(105,105,118,0.98)');
+    sg.addColorStop(0.12, 'rgba(50,50,58,0.98)');
+    sg.addColorStop(0.38, 'rgba(22,22,26,0.98)');
+    sg.addColorStop(0.68, 'rgba(10,10,12,0.98)');
+    sg.addColorStop(1,    'rgba(4,4,5,0.98)');
+    ctx.beginPath(); ctx.arc(CX, CY, R, 0, Math.PI*2);
+    ctx.fillStyle = sg; ctx.fill();
+
+    // 3 ── Clip to sphere
+    ctx.save();
+    ctx.beginPath(); ctx.arc(CX, CY, R - 0.5, 0, Math.PI*2); ctx.clip();
+
+    // 4 ── Upper-left white highlight (like image 1)
+    const hl = ctx.createRadialGradient(
+      CX - R*0.42, CY - R*0.44, 0,
+      CX - R*0.15, CY - R*0.15, R*0.9
+    );
+    hl.addColorStop(0,   'rgba(255,255,255,0.18)');
+    hl.addColorStop(0.25,'rgba(200,200,210,0.10)');
+    hl.addColorStop(0.6, 'rgba(100,100,110,0.04)');
+    hl.addColorStop(1,   'rgba(0,0,0,0)');
+    ctx.beginPath(); ctx.arc(CX, CY, R-0.5, 0, Math.PI*2);
+    ctx.fillStyle = hl; ctx.fill();
+
+    // 5 ── Grid lines (very subtle white)
+    ctx.strokeStyle = 'rgba(255,255,255,0.038)';
+    ctx.lineWidth = 0.5;
+    for (let lat = -60; lat <= 60; lat += 30) {
+      ctx.beginPath(); let mv=true;
+      for (let lon=-180; lon<=180; lon+=2) {
+        const p=proj(lon,lat,rot);
+        if(p.z>0){const sx=CX+p.x*R,sy=CY+p.y*R; mv?ctx.moveTo(sx,sy):ctx.lineTo(sx,sy); mv=false;}
+        else{mv=true;}
+      } ctx.stroke();
+    }
+    for (let lon=0; lon<360; lon+=30) {
+      ctx.beginPath(); let mv=true;
+      for (let lat=-88; lat<=88; lat+=2) {
+        const p=proj(lon,lat,rot);
+        if(p.z>0){const sx=CX+p.x*R,sy=CY+p.y*R; mv?ctx.moveTo(sx,sy):ctx.lineTo(sx,sy); mv=false;}
+        else{mv=true;}
+      } ctx.stroke();
+    }
+
+    // 6 ── Land masses — mid-gray, slightly brighter than ocean
+    LAND.forEach(polygon => {
+      const pts = polygon.map(([lo,la]) => {
+        const p = proj(lo, la, rot);
+        return { ...p, sx: CX+p.x*R, sy: CY+p.y*R };
+      });
+      if (pts.filter(p=>p.z>0).length < 2) return;
+      ctx.beginPath(); let started=false;
+      pts.forEach(p => {
+        if (p.z > -0.04) {
+          started ? ctx.lineTo(p.sx,p.sy) : ctx.moveTo(p.sx,p.sy);
+          started = true;
+        } else { started = false; }
+      });
+      ctx.closePath();
+      ctx.fillStyle   = 'rgba(48,48,56,0.92)';
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(140,140,155,0.20)';
+      ctx.lineWidth   = 0.5;
+      ctx.stroke();
+    });
+
+    // 7 ── Right-side shadow (depth)
+    const sh = ctx.createRadialGradient(CX+R*0.5,CY-R*0.1,0, CX+R*0.28,CY,R*0.9);
+    sh.addColorStop(0,'rgba(0,0,0,0.58)'); sh.addColorStop(0.5,'rgba(0,0,0,0.22)'); sh.addColorStop(1,'rgba(0,0,0,0)');
+    ctx.beginPath(); ctx.arc(CX,CY,R-0.5,0,Math.PI*2); ctx.fillStyle=sh; ctx.fill();
+
+    // 8 ── Project all city vectors for this frame
+    const cityVecs = CITIES.map(([lo,la]) => {
+      const v = proj(lo, la, rot);
+      return { v, sx: CX+v.x*R, sy: CY+v.y*R };
+    });
+
+    // 9 ── Animated great-circle arcs with traveling glow head
+    const STEPS = 52;
+    arcs.forEach(arc => {
+      const ca = cityVecs[arc.ai], cb = cityVecs[arc.bi];
+      if (!ca || !cb) return;
+      if (ca.v.z < -0.6 && cb.v.z < -0.6) return;
+
+      const headT = arc.t;
+      const tailT = Math.max(0, headT - 0.32);
+
+      // Collect visible trail points
+      const pts = [];
+      for (let i=0; i<=STEPS; i++) {
+        const st = tailT + (headT - tailT) * (i / STEPS);
+        const v = slerp(ca.v, cb.v, st);
+        if (v.z > -0.06) pts.push({ sx: CX+v.x*R, sy: CY+v.y*R, z: v.z, frac: i/STEPS });
+      }
+      if (pts.length < 2) return;
+
+      // Draw fading trail
+      for (let i=1; i<pts.length; i++) {
+        const f = pts[i].frac;
+        const vz = Math.max(0, pts[i].z);
+        const alpha = f * f * 0.6 * vz;
+        ctx.beginPath();
+        ctx.moveTo(pts[i-1].sx, pts[i-1].sy);
+        ctx.lineTo(pts[i].sx,   pts[i].sy);
+        ctx.strokeStyle = `rgba(210,210,225,${alpha})`;
+        ctx.lineWidth = 0.7 + f * 0.7;
+        ctx.stroke();
+      }
+
+      // Glowing head
+      const hv = slerp(ca.v, cb.v, headT);
+      if (hv.z > 0.02) {
+        const hx = CX+hv.x*R, hy = CY+hv.y*R;
+        const grd = ctx.createRadialGradient(hx, hy, 0, hx, hy, 11*sc);
+        grd.addColorStop(0,   'rgba(255,255,255,0.95)');
+        grd.addColorStop(0.28,'rgba(220,220,235,0.45)');
+        grd.addColorStop(1,   'rgba(180,180,200,0)');
+        ctx.beginPath(); ctx.arc(hx, hy, 11*sc, 0, Math.PI*2);
+        ctx.fillStyle = grd; ctx.fill();
+        ctx.beginPath(); ctx.arc(hx, hy, 2.4*sc, 0, Math.PI*2);
+        ctx.fillStyle = 'rgba(255,255,255,0.98)'; ctx.fill();
+      }
+    });
+
+    // 10 ── City nodes — pulsing rings + bright core
+    cityVecs.forEach((c, i) => {
+      if (c.v.z <= 0.05) return;
+      const alpha = Math.min(1, (c.v.z - 0.05) / 0.22);
+      const gr = CITY_GLOW_R[i] * sc;
+      const pulse = (Math.sin(time * 1.6 + CITY_PULSE_PH[i]) + 1) * 0.5;
+
+      // Outer pulsing ring
+      ctx.beginPath();
+      ctx.arc(c.sx, c.sy, gr*2.8 + pulse*gr*2.2, 0, Math.PI*2);
+      ctx.strokeStyle = `rgba(200,200,215,${0.10 * alpha * (1 - pulse*0.4)})`;
+      ctx.lineWidth = 0.6; ctx.stroke();
+
+      // Inner ring
+      ctx.beginPath(); ctx.arc(c.sx, c.sy, gr*2.0, 0, Math.PI*2);
+      ctx.strokeStyle = `rgba(185,185,205,${0.28 * alpha})`;
+      ctx.lineWidth = 0.7; ctx.stroke();
+
+      // Glow halo
+      const grd = ctx.createRadialGradient(c.sx, c.sy, 0, c.sx, c.sy, gr*3.5);
+      grd.addColorStop(0,   `rgba(235,235,250,${0.60 * alpha})`);
+      grd.addColorStop(0.4, `rgba(180,180,200,${0.20 * alpha})`);
+      grd.addColorStop(1,   'rgba(120,120,140,0)');
+      ctx.beginPath(); ctx.arc(c.sx, c.sy, gr*3.5, 0, Math.PI*2);
+      ctx.fillStyle = grd; ctx.fill();
+
+      // Bright core
+      ctx.beginPath(); ctx.arc(c.sx, c.sy, gr*0.52, 0, Math.PI*2);
+      ctx.fillStyle = `rgba(255,255,255,${0.96 * alpha})`; ctx.fill();
+    });
+
+    ctx.restore(); // end sphere clip
+
+    // 11 ── Edge vignette (darkens rim)
+    const ev = ctx.createRadialGradient(CX, CY, R*0.68, CX, CY, R+1);
+    ev.addColorStop(0,'rgba(0,0,0,0)'); ev.addColorStop(0.5,'rgba(0,0,0,0.08)'); ev.addColorStop(1,'rgba(0,0,0,0.90)');
+    ctx.beginPath(); ctx.arc(CX, CY, R+1, 0, Math.PI*2); ctx.fillStyle=ev; ctx.fill();
+
+    // 12 ── Atmospheric rim — silver/white glow
+    const rim = ctx.createRadialGradient(CX, CY, R*0.88, CX, CY, R*1.13);
+    rim.addColorStop(0,   'rgba(210,210,225,0.32)');
+    rim.addColorStop(0.35,'rgba(170,170,188,0.13)');
+    rim.addColorStop(0.72,'rgba(110,110,130,0.04)');
+    rim.addColorStop(1,   'rgba(60,60,80,0)');
+    ctx.beginPath(); ctx.arc(CX, CY, R*1.13, 0, Math.PI*2); ctx.fillStyle=rim; ctx.fill();
+
+    // Soft outer haze
+    const haze = ctx.createRadialGradient(CX, CY, R*1.0, CX, CY, R*1.24);
+    haze.addColorStop(0, 'rgba(180,180,200,0.07)');
+    haze.addColorStop(1, 'rgba(100,100,120,0)');
+    ctx.beginPath(); ctx.arc(CX, CY, R*1.24, 0, Math.PI*2); ctx.fillStyle=haze; ctx.fill();
+  }
+
+  window.addEventListener('scroll', () => {
+    targetScrollRot = window.scrollY * 0.022;
+  }, { passive: true });
+
+  function loop(t) {
+    const dt = Math.min((t - lastT) / 1000, 0.05);
+    lastT = t;
+    const time = t / 1000;
+    autoRot += 0.20 * dt;
+    scrollRot += (targetScrollRot - scrollRot) * 0.038;
+    // Advance arcs
+    arcs.forEach(arc => {
+      arc.t += arc.speed * dt;
+      if (arc.t >= 1) Object.assign(arc, spawnArc());
+    });
+    drawFrame(autoRot + scrollRot, time);
+    requestAnimationFrame(loop);
+  }
+
+  window.addEventListener('resize', setup, { passive: true });
+  setup();
+  requestAnimationFrame(t => { lastT = t; requestAnimationFrame(loop); });
+})();
+
+/* ── Island Navbar ── */
+(function () {
+  const nav       = document.getElementById('island-nav');
+  const toggle    = document.getElementById('nav-toggle');
+  const logo      = document.getElementById('nav-logo');
+  const dropdown  = document.getElementById('mob');
+  let   menuOpen  = false;
+
+  // Scroll shrink
+  window.addEventListener('scroll', () => {
+    nav.classList.toggle('scrolled', window.scrollY > 50);
+  }, { passive: true });
+
+  // Toggle open/close
+  function setMenu(open) {
+    menuOpen = open;
+    toggle.classList.toggle('open', open);
+    logo.classList.toggle('menu-open', open);
+    dropdown.classList.toggle('open', open);
+    toggle.setAttribute('aria-expanded', open);
+  }
+
+  toggle.addEventListener('click', () => setMenu(!menuOpen));
+
+  // Close on outside click
+  document.addEventListener('mousedown', (e) => {
+    if (menuOpen && !nav.contains(e.target) && !dropdown.contains(e.target)) {
+      setMenu(false);
+    }
+  });
+
+  // Close on Escape
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && menuOpen) setMenu(false);
+  });
+})();
+
+/* ── Scroll reveal ── */
+const io = new IntersectionObserver((entries) => {
+  entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('in'); });
+}, { threshold: 0.1, rootMargin: '0px 0px -36px 0px' });
+document.querySelectorAll('.fade').forEach(el => io.observe(el));
+
+// Trigger hero immediately
+window.addEventListener('DOMContentLoaded', () => {
+  setTimeout(() => {
+    document.querySelectorAll('.hero .fade').forEach(el => el.classList.add('in'));
+  }, 80);
+});
+</script>
+</body>
+</html>
